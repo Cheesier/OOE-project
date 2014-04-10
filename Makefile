@@ -33,8 +33,8 @@ XILINX_INIT = source /sw/xilinx/ise_12.4i/ISE_DS/settings64.sh;
 PART=xc6slx16-3-csg324
 
 
-lab.%: S=main.vhd cpu.vhd gpu.vhd
-lab.%: T=main_tb.vhd
+lab.%: S=cpu.vhd main.vhd gpu.vhd
+#lab.%: T=main_tb.vhd
 lab.%: U=main.ucf
 
 
