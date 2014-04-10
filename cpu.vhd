@@ -18,19 +18,18 @@ end cpu;
 
 architecture cpu_one of cpu is
 	component leddriver
-    Port ( clk,rst : in  STD_LOGIC;
-           seg : out  STD_LOGIC_VECTOR(7 downto 0);
-           an : out  STD_LOGIC_VECTOR (3 downto 0);
-           value : in  STD_LOGIC_VECTOR (15 downto 0));
-    end component;
+	    Port ( clk,rst : in  STD_LOGIC;
+		   seg : out  STD_LOGIC_VECTOR(7 downto 0);
+		   an : out  STD_LOGIC_VECTOR (3 downto 0);
+		   value : in  STD_LOGIC_VECTOR (15 downto 0));
+	    end component;
 
-    signal databus : STD_LOGIC_VECTOR(15 downto 0) := X"ZZZZ";
+    	signal databus : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
 
 	signal rASR : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
 	signal rIR : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
 	signal rPC : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-	signal rDR : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-	signal rDR : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+	signal rDR : STD_LOGIC_VECTOR(15 downto 0) := X"1004";
 	signal rAR : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
 	signal rHR : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
 	signal rSP : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
@@ -56,8 +55,8 @@ architecture cpu_one of cpu is
 	type vr_array is array (0 to 31) of std_logic_vector(15 downto 0);
 	signal rVR : vr_array;
 
-	begin
-		led: leddriver port map (clk, rst, seg, an, rDR);
+begin
+	led: leddriver port map (clk, rst, seg, an, rDR);
 
 
 end cpu_one;

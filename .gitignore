@@ -27,5 +27,5 @@ Thumbs.db
 src
 boot_pkg/old
 build
-lab-synthdir
-lab-simdir
+cpu-synthdir
+cpu-simdir
