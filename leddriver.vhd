@@ -14,14 +14,17 @@ entity leddriver is
     Port ( clk,rst : in  STD_LOGIC;
            seg : out  STD_LOGIC_VECTOR(7 downto 0);
            an : out  STD_LOGIC_VECTOR (3 downto 0);
-           value : in  STD_LOGIC_VECTOR (15 downto 0));
+           led : out STD_LOGIC_VECTOR (7 downto 0);
+           value : in  STD_LOGIC_VECTOR (15 downto 0);
+           ledval : in STD_LOGIC_VECTOR (7 downto 0));
 end leddriver;
 
 architecture Behavioral of leddriver is
 	signal segments : STD_LOGIC_VECTOR (6 downto 0);
 	signal counter_r :  unsigned(17 downto 0) := "000000000000000000";
 	signal v : STD_LOGIC_VECTOR (3 downto 0);
-        signal dp : std_logic;
+  signal dp : std_logic;
+
 begin
   -- decimal point not used
   dp <= '1';
@@ -61,6 +64,8 @@ begin
          when "10" => an <= "1101";
          when others => an <= "1110";
        end case;
+
+       led <= ledval;
      end if;
    end process;
 	
