@@ -23,9 +23,14 @@ Thumbs.db
 ~*
 *~
 
+#crap
+sanitycheck
+
 # Some folders to ignore #
 src
 boot_pkg/old
 build
 cpu-synthdir
 cpu-simdir
+gpu-simdir
+gpu-synthdir
