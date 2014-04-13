@@ -114,7 +114,7 @@ begin
         --elsif xctr=0 or xctr=639 or yctr=0 or yctr=479 then
         --  video<="11111111";
         elsif yctr<480 and xctr<640 then
-          video <= tile_pixel_mem(conv_integer(current_tile))(conv_integer(tilexoff*tileyoff));
+          video <= tile_pixel_mem(conv_integer(current_tile))(conv_integer(tilexoff+tileyoff*16));
         else
           video <= "00000000";
         end if;

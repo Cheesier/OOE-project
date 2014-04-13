@@ -52,10 +52,9 @@ architecture cpu_one of cpu is
 
     -- Micro memory
     type uMem_type is array (0 to 511) of STD_LOGIC_VECTOR(31 downto 0);
-    constant uMem : uMem_type := (0=>X"00001000", 
-                                  1=>X"00001000", 
-                                  2=>X"01501000", 
-                                  3=>X"08501000", 
+    constant uMem : uMem_type := (0=>X"01580000", 
+                                  1=>X"08500000",
+                                  2=>X"07580000",
                             others=> X"00000000");
 
     -- uPC
@@ -95,14 +94,8 @@ begin
             else
 
                 -- P control
-                if step = '1' then
-                    if old_step = '0' then
-                        rPC <= rPC + 1;
-                        uPc <= uPC + 1;
-                        old_step <= '1';
-                    end if;
-                else
-                    old_step <= '0';
+                if uMem(conv_integer(uPC))(19) = '1' then
+                    rPC <= rPC + 1;
                 end if;
 
                 -- SP control
