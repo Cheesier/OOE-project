@@ -36,6 +36,9 @@ architecture cpu_one of cpu is
     signal rAR : STD_LOGIC_VECTOR(15 downto 0) := X"1234";
     signal rHR : STD_LOGIC_VECTOR(15 downto 0) := X"7421";
     signal rSP : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+    signal rLC : STD_LOGIC_VECTOR(7 downto 0) := X"00";
+
+    signal rALU : STD_LOGIC_VECTOR(16 downto 0) := '0' & X"0000";
 
     -- Flags
     signal fV : STD_LOGIC := '0';
@@ -44,7 +47,6 @@ architecture cpu_one of cpu is
     signal fC : STD_LOGIC := '0';
     signal fO : STD_LOGIC := '0';
     signal fL : STD_LOGIC := '0';
-    signal rLC : STD_LOGIC_VECTOR(7 downto 0) := X"00";
 
     -- Primary memory
     type PrimMem_type is array (0 to 30000) of STD_LOGIC_VECTOR(15 downto 0);
@@ -52,7 +54,7 @@ architecture cpu_one of cpu is
 
     -- Micro memory
     type uMem_type is array (0 to 511) of STD_LOGIC_VECTOR(31 downto 0);
-    constant uMem : uMem_type := (0=>X"00000000", 
+    constant uMem : uMem_type := (0=>X"00002208", 
                                   1=>X"05800000",
                                   2=>X"07880000",
                                   3=>X"08780000",
@@ -95,6 +97,14 @@ begin
                 uPC <= "000000000";
             else
 
+                -- LC control
+                case uMem(conv_integer(uPC))(15 downto 14) is
+                    when "01" => rLC <= rLC - rLC;
+                    when "10" => rLC <= databus(7 downto 0);
+                    when "11" => rLC <= uMem(conv_integer(uPC))(7 downto 0);
+                    when others => null;
+                end case;
+
                 -- P control
                 if uMem(conv_integer(uPC))(19) = '1' then
                     rPC <= rPC + 1;
@@ -107,6 +117,31 @@ begin
                     when others => null;
                 end case;
 
+                -- SEQ
+                case uMem(conv_integer(uPC))(13 downto 9) is
+                    when "00000" => uPC <= uPC + 1;
+                    when "00001" => uPC <= K1(conv_integer(rIR(15 downto 10)));
+                    when "00010" => uPC <= K2(conv_integer(rIR(9 downto 8)));
+                    when "00011" => uPC <= "000000000";
+                    when "10000" => uPC <= uMem(conv_integer(uPC))(8 downto 0);
+                    when "10001" => if fZ = '1' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "10010" => if fZ = '0' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "10011" => if fN = '1' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "10100" => if fN = '0' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "10101" => if fC = '1' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "10110" => if fC = '0' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "10111" => if fO = '1' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "11000" => if fO = '0' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "11001" => if fL = '1' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "11010" => if fL = '0' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "11011" => if fV = '1' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "11100" => if fV = '0' then uPC <= uMem(conv_integer(uPC))(8 downto 0); end if;
+                    when "11101" => 
+                        uPC <= uMem(conv_integer(uPC))(8 downto 0); 
+                        SuPC <= uPC+1;
+                    when "11110" => uPC <= SuPC;
+                    when others => null;
+                end case;
 
                 -- FROM BUS
                 case uMem(conv_integer(uPC))(23 downto 20) is
@@ -121,32 +156,6 @@ begin
                     when "1001" => rSP <= databus;
                     --when "1010" => rGR <= databus; -- GR mux
                     --when "1011" => rVR <= databus; -- GR mux
-                    when others => null;
-                end case;
-
-                -- SEQ
-                case uMem(conv_integer(uPC))(13 downto 9) is
-                    when "00000" => uPC <= uPC + 1;
-                    when "00001" => uPC <= K1(conv_integer(rIR(15 downto 10)));
-                    when "00010" => uPC <= K2(conv_integer(rIR(9 downto 8)));
-                    when "00011" => uPC <= "000000000";
-                    when "10000" => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "10001" and fZ = '1' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "10010" and fZ = '0' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "10011" and fN = '1' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "10100" and fN = '0' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "10101" and fC = '1' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "10110" and fC = '0' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "10111" and fO = '1' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "11000" and fO = '0' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "11001" and fL = '1' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "11010" and fL = '0' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "11011" and fV = '1' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    --when "11100" and fV = '0' => uPC <= uMem(conv_integer(uPC))(8 downto 0);
-                    when "11101" => 
-                        uPC <= uMem(conv_integer(uPC))(8 downto 0),
-                        SuPC <= uPC+1;
-                    when "11110" => uPC <= SuPC;
                     when others => null;
                 end case;
             end if;
@@ -171,5 +180,18 @@ begin
     -- *****************************
     -- * ALU - TODO                *
     -- *****************************
+    process(clk) begin
+        if rising_edge(clk) then
+            case uMem(conv_integer(uPC))(31 downto 28) is
+                when "0001" => rALU <= '0' & databus;
+                when "0011" => rALU <= '0' & X"0000"; fZ <= '1'; fN <= '0';
+                when "1001" => rALU <= ('0' & rAR) + ('0' & databus);
+                when others => null;
+            end case;
+        end if;
+        rAR <= rALU(15 downto 0);
+    end process;
+            
+
 
 end cpu_one;
