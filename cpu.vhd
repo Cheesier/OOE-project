@@ -181,14 +181,20 @@ begin
     -- * ALU - TODO                *
     -- *****************************
     process(clk) begin
-        if rising_edge(clk) then
-            case uMem(conv_integer(uPC))(31 downto 28) is
-                when "0001" => rALU <= '0' & databus;
-                when "0011" => rALU <= '0' & X"0000"; fZ <= '1'; fN <= '0';
-                when "1001" => rALU <= ('0' & rAR) + ('0' & databus);
-                when others => null;
-            end case;
-        end if;
+        case uMem(conv_integer(uPC))(31 downto 28) is
+            when "0001" => rAR <= databus; -- rAr = databus
+            when "0011" => rALU <= '0' & X"0000"; fZ <= '1'; fN <= '0'; -- rAR = X"0000"
+            --when "1001" => rALU <= ('0' & rAR) + ('0' & databus); rAR <= rALU(3 downto 0); fC <= rALU(4); -- ar + databus
+            when "0100" => -- res = |nib1 - nib2|, flag = 1 iff nib2 > nib1
+         	    if (rAR >= databus) then
+         	        rAR <= std_logic_vector(unsigned(rAR) - unsigned(databus));
+         	        --flag  <= '0';
+                else
+         	        rAR <= std_logic_vector(unsigned(databus) - unsigned(rAR));
+         	        --flag   <= '1';
+                end if;
+            when others => null;
+        end case;
         rAR <= rALU(15 downto 0);
     end process;
             

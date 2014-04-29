@@ -41,6 +41,10 @@ gpu.%: S=gpu.vhd
 gpu.%: T=gpu_tb.vhd
 gpu.%: U=gpu.ucf
 
+main.%: S=main.vhd gpu.vhd cpu.vhd leddriver.vhd
+main.%: T=cpu_tb.vhd
+main.%: U=main.ucf
+
 
 # Det här är ett exempel på hur man kan skriva en testbänk som är
 # relevant, även om man kör en simulering i batchläge (make batchlab.simc)

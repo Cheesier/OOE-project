@@ -32,7 +32,10 @@ sanitycheck
 src
 boot_pkg/old
 build
+main-synthdir
+main-simdir
 cpu-synthdir
 cpu-simdir
 gpu-simdir
 gpu-synthdir
+res
