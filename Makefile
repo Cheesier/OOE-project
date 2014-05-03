@@ -41,8 +41,8 @@ gpu.%: S=gpu.vhd
 gpu.%: T=gpu_tb.vhd
 gpu.%: U=gpu.ucf
 
-main.%: S=main.vhd gpu.vhd cpu.vhd leddriver.vhd
-main.%: T=cpu_tb.vhd
+main.%: S=leddriver.vhd cpu.vhd gpu.vhd vr_mem.vhd main.vhd
+main.%: T=main_tb.vhd
 main.%: U=main.ucf
 
 

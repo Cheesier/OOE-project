@@ -2,15 +2,22 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.NUMERIC_STD.ALL;
+--use work.my_types.ALL;
 
 entity gpu is
     Port ( clk,rst : in  STD_LOGIC;
             vgaRed, vgaGreen: out  STD_LOGIC_VECTOR (2 downto 0);
             vgaBlue : out  STD_LOGIC_VECTOR (2 downto 1);
-            Hsync,Vsync : out  STD_LOGIC);
+            Hsync,Vsync : out  STD_LOGIC;
+            vr_addr : out std_logic_vector(4 downto 0);
+            vr_we : out std_logic;
+            vr_i : out std_logic_vector(15 downto 0);
+            vr_o : in std_logic_vector(15 downto 0);
+            fV: out STD_LOGIC);
 end gpu;
 
 architecture gpu_one of gpu is
+
     signal xctr,yctr : STD_LOGIC_VECTOR(11 downto 0) := "000000000000";
     alias xtile : STD_LOGIC_VECTOR(6 downto 0) is xctr(10 downto 4);
     alias ytile : STD_LOGIC_VECTOR(6 downto 0) is yctr(10 downto 4);
@@ -26,8 +33,8 @@ architecture gpu_one of gpu is
     --signal timer : STD_LOGIC_VECTOR(7 downto 0) := X"00";
 
     -- Tiles
-    type tile_pixel_data_type is array (0 to 255) of STD_LOGIC_VECTOR(7 downto 0);
-    type tile_pixel_mem_type is array (0 to 31) of tile_pixel_data_type;
+    type pixel_data_type is array (0 to 255) of STD_LOGIC_VECTOR(7 downto 0);
+    type tile_pixel_mem_type is array (0 to 31) of pixel_data_type;
     constant tile_pixel_mem : tile_pixel_mem_type := (
         0 => (X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00"),
         1 => (X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83",X"83"),
@@ -63,6 +70,11 @@ architecture gpu_one of gpu is
         31 => (X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"b0",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"b0",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"b0",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"b0",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"b0",X"00",X"00",X"b0",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0",X"00",X"b0",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"00",X"b0")
         --others => (others =>X"00") -- transparent
         );
+    
+    type sprite_pixel_mem_type is array(0 to 15) of pixel_data_type;
+    constant sprite_pixel_mem : sprite_pixel_mem_type := (
+        others => (others =>X"F0")
+    ); 
 
     type tile_mem_row_type is array(0 to 99) of STD_LOGIC_VECTOR(7 downto 0);
     type tile_mem_type is array(0 to 39) of tile_mem_row_type;
@@ -93,17 +105,30 @@ others => (others => X"00")
     signal current_pixel2 : STD_LOGIC_VECTOR(7 downto 0) := X"00";
     signal current_pixel3 : STD_LOGIC_VECTOR(7 downto 0) := X"00";
 
+    --signal x_displacement0 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+    --alias y_displacement0 : STD_LOGIC_VECTOR(15 downto 0) is rVR(17);
+    --signal x_displacement1 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+    --alias y_displacement1 : STD_LOGIC_VECTOR(15 downto 0) is rVR(19);
+    --alias x_displacement2 : STD_LOGIC_VECTOR(15 downto 0) is rVR(20);
+    --alias y_displacement2 : STD_LOGIC_VECTOR(15 downto 0) is rVR(21);
+    --alias x_displacement3 : STD_LOGIC_VECTOR(15 downto 0) is rVR(22);
+    --alias y_displacement3 : STD_LOGIC_VECTOR(15 downto 0) is rVR(23);
+
     signal x_displacement0 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal y_displacement0 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal x_displacement1 : STD_LOGIC_VECTOR(15 downto 0) := X"FFEF";
-    signal y_displacement1 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+    signal x_displacement1 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
     signal x_displacement2 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal y_displacement2 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
     signal x_displacement3 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+    signal y_displacement0 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+    signal y_displacement1 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+    signal y_displacement2 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
     signal y_displacement3 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
 
     signal counter : STD_LOGIC_VECTOR(23 downto 0) := "000000000000000000000000";
 begin
+    --x_displacement0 <= rVR(16);
+    --x_displacement1 <= rVR(18);
+
+
     -- Pixel clock
     process(clk) begin
      if rising_edge(clk) then
@@ -126,7 +151,7 @@ begin
          xctr <= xctr + 1;
        end if;
       end if;
-      --
+
       if xctr=656 then -- 688
         hs <= '0';
       elsif xctr=752 then -- 784
@@ -145,7 +170,7 @@ begin
        else
          yctr <= yctr + 1;
        end if;
-       --
+
        if yctr=490 then -- 509
          vs <= '0';
        elsif  yctr=492 then --511
@@ -159,82 +184,77 @@ begin
 
   process(clk) begin
     if rising_edge(clk) then
-      counter <= counter + 4;
-      if counter = X"000000" then 
-        if x_displacement0 < 143 then
-            x_displacement0 <= x_displacement0 + 1;
-            y_displacement0 <= y_displacement0 + 1;
-            x_displacement1 <= x_displacement1 - 1;
+        if yctr = 480 then
+            fV <= '1';
         else
-            x_displacement0 <= X"0000";
-            y_displacement0 <= X"0000";
-            x_displacement1 <= X"FFEF";
+            fv <= '0';
         end if;
-      end if;
     end if;
   end process;
-             
+     
 
   process(clk) begin
-    if xctr - x_displacement0 > 1599 or yctr - y_displacement0 > 639 then
-        current_tile0 <= X"00";
-    elsif x_displacement0(3 downto 0) <= tilexoff and y_displacement0(3 downto 0) <= tileyoff  then 
-        current_tile0 <= layer0_mem(conv_integer(ytile) - conv_integer(y_displacement0(10 downto 4)))
-                                   (conv_integer(xtile) - conv_integer(x_displacement0(10 downto 4)));
-    elsif x_displacement0(3 downto 0) <= tilexoff then
-        current_tile0 <= layer0_mem(conv_integer(ytile) - conv_integer(y_displacement0(10 downto 4) + 1))
-                                   (conv_integer(xtile) - conv_integer(x_displacement0(10 downto 4)));
-    elsif y_displacement0(3 downto 0) <= tileyoff then
-        current_tile0 <= layer0_mem(conv_integer(ytile) - conv_integer(y_displacement0(10 downto 4)))
-                                   (conv_integer(xtile) - conv_integer(x_displacement0(10 downto 4) + 1));
-    else
-        current_tile0 <= layer0_mem(conv_integer(ytile) - conv_integer(y_displacement0(10 downto 4) + 1))
-                                   (conv_integer(xtile) - conv_integer(x_displacement0(10 downto 4) + 1));
-    end if;
-    if xctr - x_displacement1 > 1599 or yctr - y_displacement1 > 639 then
-        current_tile1 <= X"00";
-    elsif x_displacement1(3 downto 0) <= tilexoff and y_displacement1(3 downto 0) <= tileyoff  then 
-        current_tile1 <= layer1_mem(conv_integer(ytile) - conv_integer(y_displacement1(10 downto 4)))
-                                   (conv_integer(xtile) - conv_integer(x_displacement1(10 downto 4)));
-    elsif x_displacement1(3 downto 0) <= tilexoff then
-        current_tile1 <= layer1_mem(conv_integer(ytile) - conv_integer(y_displacement1(10 downto 4) + 1))
-                                   (conv_integer(xtile) - conv_integer(x_displacement1(10 downto 4)));
-    elsif y_displacement1(3 downto 0) <= tileyoff then
-        current_tile1 <= layer1_mem(conv_integer(ytile) - conv_integer(y_displacement1(10 downto 4)))
-                                   (conv_integer(xtile) - conv_integer(x_displacement1(10 downto 4) + 1));
-    else
-        current_tile1 <= layer1_mem(conv_integer(ytile) - conv_integer(y_displacement1(10 downto 4) + 1))
-                                   (conv_integer(xtile) - conv_integer(x_displacement1(10 downto 4) + 1));
-    end if;
-    if xctr - x_displacement2 > 1599 or yctr - y_displacement2 > 639 then
-        current_tile2 <= X"00";
-    elsif x_displacement2(3 downto 0) <= tilexoff and y_displacement2(3 downto 0) <= tileyoff  then 
-        current_tile2 <= layer2_mem(conv_integer(ytile) - conv_integer(y_displacement2(10 downto 4)))
-                                   (conv_integer(xtile) - conv_integer(x_displacement2(10 downto 4)));
-    elsif x_displacement2(3 downto 0) <= tilexoff then
-        current_tile2 <= layer2_mem(conv_integer(ytile) - conv_integer(y_displacement2(10 downto 4) + 1))
-                                   (conv_integer(xtile) - conv_integer(x_displacement2(10 downto 4)));
-    elsif y_displacement2(3 downto 0) <= tileyoff then
-        current_tile2 <= layer2_mem(conv_integer(ytile) - conv_integer(y_displacement2(10 downto 4)))
-                                   (conv_integer(xtile) - conv_integer(x_displacement2(10 downto 4) + 1));
-    else
-        current_tile2 <= layer2_mem(conv_integer(ytile) - conv_integer(y_displacement2(10 downto 4) + 1))
-                                   (conv_integer(xtile) - conv_integer(x_displacement2(10 downto 4) + 1));
-    end if;
-    if xctr - x_displacement3 > 1599 or yctr - y_displacement3 > 639 then
-        current_tile3 <= X"00";
-    elsif x_displacement3(3 downto 0) <= tilexoff and y_displacement3(3 downto 0) <= tileyoff  then 
-        current_tile3 <= layer3_mem(conv_integer(ytile) - conv_integer(y_displacement3(10 downto 4)))
-                                   (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4)));
-    elsif x_displacement3(3 downto 0) <= tilexoff then
-        current_tile3 <= layer3_mem(conv_integer(ytile) - conv_integer(y_displacement3(10 downto 4) + 1))
-                                   (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4)));
-    elsif y_displacement3(3 downto 0) <= tileyoff then
-        current_tile3 <= layer3_mem(conv_integer(ytile) - conv_integer(y_displacement3(10 downto 4)))
-                                   (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4) + 1));
-    else
-        current_tile3 <= layer3_mem(conv_integer(ytile) - conv_integer(y_displacement3(10 downto 4) + 1))
-                                   (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4) + 1));
+    if rising_edge(clk) then
+        if xctr - x_displacement0 > 1599 or yctr - y_displacement0 > 639 then
+            current_tile0 <= X"00";
+        elsif x_displacement0(3 downto 0) <= tilexoff and y_displacement0(3 downto 0) <= tileyoff  then 
+            current_tile0 <= layer0_mem(conv_integer(ytile) - conv_integer(y_displacement0(10 downto 4)))
+                                       (conv_integer(xtile) - conv_integer(x_displacement0(10 downto 4)));
+        elsif x_displacement0(3 downto 0) <= tilexoff then
+            current_tile0 <= layer0_mem(conv_integer(ytile) - conv_integer(y_displacement0(10 downto 4) + 1))
+                                       (conv_integer(xtile) - conv_integer(x_displacement0(10 downto 4)));
+        elsif y_displacement0(3 downto 0) <= tileyoff then
+            current_tile0 <= layer0_mem(conv_integer(ytile) - conv_integer(y_displacement0(10 downto 4)))
+                                       (conv_integer(xtile) - conv_integer(x_displacement0(10 downto 4) + 1));
+        else
+            current_tile0 <= layer0_mem(conv_integer(ytile) - conv_integer(y_displacement0(10 downto 4) + 1))
+                                       (conv_integer(xtile) - conv_integer(x_displacement0(10 downto 4) + 1));
+        end if;
+        if xctr - x_displacement1 > 1599 or yctr - y_displacement1 > 639 then
+            current_tile1 <= X"00";
+        elsif x_displacement1(3 downto 0) <= tilexoff and y_displacement1(3 downto 0) <= tileyoff  then 
+            current_tile1 <= layer1_mem(conv_integer(ytile) - conv_integer(y_displacement1(10 downto 4)))
+                                       (conv_integer(xtile) - conv_integer(x_displacement1(10 downto 4)));
+        elsif x_displacement1(3 downto 0) <= tilexoff then
+            current_tile1 <= layer1_mem(conv_integer(ytile) - conv_integer(y_displacement1(10 downto 4) + 1))
+                                       (conv_integer(xtile) - conv_integer(x_displacement1(10 downto 4)));
+        elsif y_displacement1(3 downto 0) <= tileyoff then
+            current_tile1 <= layer1_mem(conv_integer(ytile) - conv_integer(y_displacement1(10 downto 4)))
+                                       (conv_integer(xtile) - conv_integer(x_displacement1(10 downto 4) + 1));
+        else
+            current_tile1 <= layer1_mem(conv_integer(ytile) - conv_integer(y_displacement1(10 downto 4) + 1))
+                                       (conv_integer(xtile) - conv_integer(x_displacement1(10 downto 4) + 1));
+        end if;
+        if xctr - x_displacement2 > 1599 or yctr - y_displacement2 > 639 then
+            current_tile2 <= X"00";
+        elsif x_displacement2(3 downto 0) <= tilexoff and y_displacement2(3 downto 0) <= tileyoff  then 
+            current_tile2 <= layer2_mem(conv_integer(ytile) - conv_integer(y_displacement2(10 downto 4)))
+                                       (conv_integer(xtile) - conv_integer(x_displacement2(10 downto 4)));
+        elsif x_displacement2(3 downto 0) <= tilexoff then
+            current_tile2 <= layer2_mem(conv_integer(ytile) - conv_integer(y_displacement2(10 downto 4) + 1))
+                                       (conv_integer(xtile) - conv_integer(x_displacement2(10 downto 4)));
+        elsif y_displacement2(3 downto 0) <= tileyoff then
+            current_tile2 <= layer2_mem(conv_integer(ytile) - conv_integer(y_displacement2(10 downto 4)))
+                                       (conv_integer(xtile) - conv_integer(x_displacement2(10 downto 4) + 1));
+        else
+            current_tile2 <= layer2_mem(conv_integer(ytile) - conv_integer(y_displacement2(10 downto 4) + 1))
+                                       (conv_integer(xtile) - conv_integer(x_displacement2(10 downto 4) + 1));
+        end if;
+        if xctr - x_displacement3 > 1599 or yctr - y_displacement3 > 639 then
+            current_tile3 <= X"00";
+        elsif x_displacement3(3 downto 0) <= tilexoff and y_displacement3(3 downto 0) <= tileyoff  then 
+            current_tile3 <= layer3_mem(conv_integer(ytile) - conv_integer(y_displacement3(10 downto 4)))
+                                       (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4)));
+        elsif x_displacement3(3 downto 0) <= tilexoff then
+            current_tile3 <= layer3_mem(conv_integer(ytile) - conv_integer(y_displacement3(10 downto 4) + 1))
+                                       (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4)));
+        elsif y_displacement3(3 downto 0) <= tileyoff then
+            current_tile3 <= layer3_mem(conv_integer(ytile) - conv_integer(y_displacement3(10 downto 4)))
+                                       (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4) + 1));
+        else
+            current_tile3 <= layer3_mem(conv_integer(ytile) - conv_integer(y_displacement3(10 downto 4) + 1))
+                                       (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4) + 1));
+        end if;
     end if;
 
     if rising_edge(clk) then

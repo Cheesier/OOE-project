@@ -39,3 +39,4 @@ cpu-simdir
 gpu-simdir
 gpu-synthdir
 res
+._*
