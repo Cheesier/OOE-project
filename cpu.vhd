@@ -2,7 +2,6 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.NUMERIC_STD.ALL;
---use work.my_types.ALL;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx primitives in this code.
@@ -14,10 +13,10 @@ entity cpu is
         seg: out  STD_LOGIC_VECTOR(7 downto 0);
         an : out  STD_LOGIC_VECTOR (3 downto 0);
         led : out STD_LOGIC_VECTOR (7 downto 0);
-        vr_addr : out std_logic_vector(4 downto 0);
-        vr_we : out std_logic;
-        vr_i : out std_logic_vector(15 downto 0);
-        vr_o : in std_logic_vector(15 downto 0);
+        vr_we : out STD_LOGIC;
+        vr_addr : out STD_LOGIC_VECTOR(4 downto 0);
+        vr_i : out STD_LOGIC_VECTOR(15 downto 0);
+        vr_o : in STD_LOGIC_VECTOR(15 downto 0);
         fV: in STD_LOGIC);
 end cpu;
 
@@ -131,7 +130,7 @@ architecture cpu_one of cpu is
     signal rGR : gr_array := (others=> X"0000");
 
     signal tempGR : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal tempVR : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+    --signal tempVR : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
 
 
     ---------- DEBUG --------
@@ -200,8 +199,14 @@ begin
                     when "11110" => uPC <= SuPC;
                     when others => null;
                 end case;
-
+                
                 -- FROM BUS
+                if cFB = "1011" then
+                    vr_we <= '1';
+                else
+                    vr_we <= '0';
+                end if;
+
                 case cFB is
                     when "0001" => rASR <= databus;
                     when "0010" => rIR <= databus;
@@ -218,12 +223,8 @@ begin
                         else
                             rGR(conv_integer(rIR(3 downto 0))) <= databus;
                         end if;
-                    --when "1011" => rVR(conv_integer(cM & rIR(7 downto 4))) <= databus;
-                    when "1011" =>
-                        vr_we <= '1';
-                        vr_addr <= cM & rIR(7 downto 4);
-                        vr_i <= databus;
-                    when others => vr_we <= '0';
+                    when "1011" => vr_i <= databus;
+                    when others => null;
                 end case;
             end if;
         end if;
@@ -249,8 +250,9 @@ begin
     tempGR <= rGR(conv_integer(rIR(7 downto 4))) when '0',
               rGR(conv_integer(rIR(3 downto 0))) when others;
 
+    vr_addr <= rIR(10) & rIR(7 downto 4);
     --tempVR <= rVR(conv_integer(cM & rIR(7 downto 4)));
-    vr_addr <= cM & rIR(7 downto 4);
+    --vr_addr <= cM & rIR(7 downto 4);
 
     -- *****************************
     -- * ALU - TODO                *
@@ -263,7 +265,7 @@ begin
 --            rALU + ('0' & databus) when "0100",     -- rAR = rAR + databus
 --            rALU when others;
             
-    process(rALU, cALU) begin
+    process(rALU, cALU, databus, ARin) begin
 	    case cALU is
             when "0001" => ARin <= databus;                         -- rAr = databus
             when "0011" => ARin <= X"0000"; fZ <= '1'; fN <= '0';     -- rAR = 0

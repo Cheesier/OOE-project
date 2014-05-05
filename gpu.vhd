@@ -2,17 +2,16 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
 use IEEE.NUMERIC_STD.ALL;
---use work.my_types.ALL;
 
 entity gpu is
     Port ( clk,rst : in  STD_LOGIC;
-            vgaRed, vgaGreen: out  STD_LOGIC_VECTOR (2 downto 0);
-            vgaBlue : out  STD_LOGIC_VECTOR (2 downto 1);
-            Hsync,Vsync : out  STD_LOGIC;
-            vr_addr : out std_logic_vector(4 downto 0);
-            vr_we : out std_logic;
-            vr_i : out std_logic_vector(15 downto 0);
-            vr_o : in std_logic_vector(15 downto 0);
+            vgaRed, vgaGreen: out STD_LOGIC_VECTOR (2 downto 0);
+            vgaBlue : out STD_LOGIC_VECTOR (2 downto 1);
+            Hsync,Vsync : out STD_LOGIC;
+            vr_we : in STD_LOGIC;
+            vr_addr: in STD_LOGIC_VECTOR(4 downto 0);
+            vr_i: in STD_LOGIC_VECTOR(15 downto 0);
+            vr_o: out STD_LOGIC_VECTOR(15 downto 0);
             fV: out STD_LOGIC);
 end gpu;
 
@@ -30,7 +29,7 @@ architecture gpu_one of gpu is
     alias red : STD_LOGIC_VECTOR(2 downto 0) is video(6 downto 4);
     alias green : STD_LOGIC_VECTOR(1 downto 0) is video(3 downto 2);
     alias blue : STD_LOGIC_VECTOR(1 downto 0) is video(1 downto 0);
-    --signal timer : STD_LOGIC_VECTOR(7 downto 0) := X"00";
+
 
     -- Tiles
     type pixel_data_type is array (0 to 255) of STD_LOGIC_VECTOR(7 downto 0);
@@ -105,28 +104,28 @@ others => (others => X"00")
     signal current_pixel2 : STD_LOGIC_VECTOR(7 downto 0) := X"00";
     signal current_pixel3 : STD_LOGIC_VECTOR(7 downto 0) := X"00";
 
-    --signal x_displacement0 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    --alias y_displacement0 : STD_LOGIC_VECTOR(15 downto 0) is rVR(17);
-    --signal x_displacement1 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    --alias y_displacement1 : STD_LOGIC_VECTOR(15 downto 0) is rVR(19);
-    --alias x_displacement2 : STD_LOGIC_VECTOR(15 downto 0) is rVR(20);
-    --alias y_displacement2 : STD_LOGIC_VECTOR(15 downto 0) is rVR(21);
-    --alias x_displacement3 : STD_LOGIC_VECTOR(15 downto 0) is rVR(22);
-    --alias y_displacement3 : STD_LOGIC_VECTOR(15 downto 0) is rVR(23);
 
-    signal x_displacement0 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal x_displacement1 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal x_displacement2 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal x_displacement3 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal y_displacement0 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal y_displacement1 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal y_displacement2 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
-    signal y_displacement3 : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
+    type vr_array is array (0 to 31) of STD_LOGIC_VECTOR(15 downto 0);
+    signal rVR : vr_array := (others=> X"0050");
+
+    alias x_displacement0 : STD_LOGIC_VECTOR(15 downto 0) is rVR(16);
+    alias y_displacement0 : STD_LOGIC_VECTOR(15 downto 0) is rVR(17);
+    alias x_displacement1 : STD_LOGIC_VECTOR(15 downto 0) is rVR(18);
+    alias y_displacement1 : STD_LOGIC_VECTOR(15 downto 0) is rVR(19);
+    alias x_displacement2 : STD_LOGIC_VECTOR(15 downto 0) is rVR(20);
+    alias y_displacement2 : STD_LOGIC_VECTOR(15 downto 0) is rVR(21);
+    alias x_displacement3 : STD_LOGIC_VECTOR(15 downto 0) is rVR(22);
+    alias y_displacement3 : STD_LOGIC_VECTOR(15 downto 0) is rVR(23);
 
     signal counter : STD_LOGIC_VECTOR(23 downto 0) := "000000000000000000000000";
 begin
-    --x_displacement0 <= rVR(16);
-    --x_displacement1 <= rVR(18);
+    
+    process(vr_i, vr_we) begin
+        if vr_we = '1' then
+            rVR(conv_integer(vr_addr)) <= vr_i;
+        end if;
+    end process;
+    vr_o <= rVR(conv_integer(vr_addr));
 
 
     -- Pixel clock
