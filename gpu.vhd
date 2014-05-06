@@ -106,7 +106,7 @@ others => (others => X"00")
 
 
     type vr_array is array (0 to 31) of STD_LOGIC_VECTOR(15 downto 0);
-    signal rVR : vr_array := (others=> X"0050");
+    signal rVR : vr_array := (others=> X"0000");
 
     alias x_displacement0 : STD_LOGIC_VECTOR(15 downto 0) is rVR(16);
     alias y_displacement0 : STD_LOGIC_VECTOR(15 downto 0) is rVR(17);
@@ -120,7 +120,7 @@ others => (others => X"00")
     signal counter : STD_LOGIC_VECTOR(23 downto 0) := "000000000000000000000000";
 begin
     
-    process(vr_i, vr_we) begin
+    process(vr_i, vr_we, vr_addr) begin
         if vr_we = '1' then
             rVR(conv_integer(vr_addr)) <= vr_i;
         end if;
@@ -183,7 +183,7 @@ begin
 
   process(clk) begin
     if rising_edge(clk) then
-        if yctr = 480 then
+        if yctr = 480 and xctr = 0 and pixel = "00" then
             fV <= '1';
         else
             fv <= '0';
@@ -254,9 +254,7 @@ begin
             current_tile3 <= layer3_mem(conv_integer(ytile) - conv_integer(y_displacement3(10 downto 4) + 1))
                                        (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4) + 1));
         end if;
-    end if;
 
-    if rising_edge(clk) then
       --if pixel = "11" then
         if xctr>639 or yctr>479 then
           video <= "00000000";
@@ -265,14 +263,14 @@ begin
         elsif yctr<480 and xctr<640 then
             if pixel = "00" then
               current_pixel0 <= tile_pixel_mem(conv_integer(current_tile0))(conv_integer((tileyoff - y_displacement0(3 downto 0)) & 
-                                                                                         (tilexoff - x_displacement0(3 downto 0))));
+                                                                                         (tilexoff - x_displacement0(3 downto 0) - 1)));
               current_pixel1 <= tile_pixel_mem(conv_integer(current_tile1))(conv_integer((tileyoff - y_displacement1(3 downto 0)) &
-                                                                                         (tilexoff - x_displacement1(3 downto 0))));
+                                                                                         (tilexoff - x_displacement1(3 downto 0) - 1)));
             elsif pixel = "01" then
               current_pixel2 <= tile_pixel_mem(conv_integer(current_tile2))(conv_integer((tileyoff - y_displacement2(3 downto 0)) &
-                                                                                         (tilexoff - x_displacement2(3 downto 0))));
+                                                                                         (tilexoff - x_displacement2(3 downto 0) - 1)));
               current_pixel3 <= tile_pixel_mem(conv_integer(current_tile3))(conv_integer((tileyoff - y_displacement3(3 downto 0)) &
-                                                                                         (tilexoff - x_displacement3(3 downto 0))));
+                                                                                         (tilexoff - x_displacement3(3 downto 0) - 1)));
             elsif pixel = "11" then
                 if current_pixel0(7) = '1' then
                     video <= current_pixel0;

@@ -1,7 +1,9 @@
 :boot
-	MOVEV VR0, 0
+	MOVEVH VR0, 0xFE10
 	MOVE GR0, 1
 :loop
-	ADDV VR0, GR0
-	;;WVS
-	JMP loop
+	ADDVH VR0, GR0
+	CMPVH VR0, 640
+	BEQ boot
+	WVS
+	BRA loop

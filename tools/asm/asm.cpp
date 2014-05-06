@@ -493,6 +493,7 @@ int getRegisterNumber(string word) {
 
 int getAdr(string word) {
     string actual;
+    bool hex = false;
     switch(word[0]) {
         case '(': // strip away junk, we already know the addressing mode
         case '[':
@@ -504,6 +505,8 @@ int getAdr(string word) {
         default:
             actual = word;
     }
+    if (actual.substr(0,2).compare("0x") == 0)
+        return toHex(actual.substr(2, word.length()));
     return toDec(actual);
 }
 
