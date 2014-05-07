@@ -106,7 +106,7 @@ others => (others => X"00")
 
 
     type vr_array is array (0 to 31) of STD_LOGIC_VECTOR(15 downto 0);
-    signal rVR : vr_array := (others=> X"0000");
+    signal rVR : vr_array := (others=> X"0000"); --17=> X"0050", 18=> X"FFF0", 
 
     alias x_displacement0 : STD_LOGIC_VECTOR(15 downto 0) is rVR(16);
     alias y_displacement0 : STD_LOGIC_VECTOR(15 downto 0) is rVR(17);
@@ -255,12 +255,7 @@ begin
                                        (conv_integer(xtile) - conv_integer(x_displacement3(10 downto 4) + 1));
         end if;
 
-      --if pixel = "11" then
-        if xctr>639 or yctr>479 then
-          video <= "00000000";
-        --elsif xctr=0 or xctr=639 or yctr=0 or yctr=479 then
-        --  video<="11111111";
-        elsif yctr<480 and xctr<640 then
+        if yctr<479 and xctr<639 then
             if pixel = "00" then
               current_pixel0 <= tile_pixel_mem(conv_integer(current_tile0))(conv_integer((tileyoff - y_displacement0(3 downto 0)) & 
                                                                                          (tilexoff - x_displacement0(3 downto 0) - 1)));
@@ -285,7 +280,6 @@ begin
         else
           video <= "00000000";
         end if;
-      --end if;
     end if;
   end process;
 

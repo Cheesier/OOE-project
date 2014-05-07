@@ -15,6 +15,8 @@ using namespace std;
 #define MAX_WORDS_PER_LINE 10
 #define MEMORY_LENGTH 0xFF
 
+int max_addr = 0;
+
 bool debug = true;
 int numberToDisplay = 0x10;
 
@@ -23,7 +25,7 @@ int currentLineNum;
 
 map<string, int> labels;
 int memoryLocation = 0;
-int primMemory[MEMORY_LENGTH]; // primary memory
+short primMemory[MEMORY_LENGTH]; // primary memory
 string assembly[MEMORY_LENGTH];
 
 map<string, int> ops;
@@ -172,7 +174,7 @@ void findLabels(vector<string> & ret, int words) {
         }
         else if (isOperation(ret[i])) {
             memoryLocation++;
-            if (words == 3) { // standard operation
+            if (words == 3 || words == 2) { // standard operation
                 if (getAddressMode(ret, words) != MODE_REGISTER) {
                     memoryLocation++;
                 }
@@ -187,6 +189,8 @@ void findLabels(vector<string> & ret, int words) {
                 reportError("Unknown operation '" + ret[i] + "'");
             }
         }
+        if (memoryLocation > max_addr)
+            max_addr = memoryLocation;
     }
 }
 
@@ -229,7 +233,7 @@ void fillMemory(vector<string> & ret, int words) {
             int mode = 0;
             int gra = 0;
             int grb = 0;
-            int immediateValue = 0;
+            short immediateValue = 0;
 
             op = ops[ret[i]];
             mode = getAddressMode(ret, words);
@@ -493,8 +497,14 @@ int getRegisterNumber(string word) {
 
 int getAdr(string word) {
     string actual;
-    bool hex = false;
+    bool negative = false;
+    short value = 0;
+
     switch(word[0]) {
+        case '-': // negative number
+            actual = word.substr(1, word.length());
+            negative = true;
+            break;
         case '(': // strip away junk, we already know the addressing mode
         case '[':
             actual = word.substr(1, word.length()-2);
@@ -506,8 +516,13 @@ int getAdr(string word) {
             actual = word;
     }
     if (actual.substr(0,2).compare("0x") == 0)
-        return toHex(actual.substr(2, word.length()));
-    return toDec(actual);
+        value = toHex(actual.substr(2, word.length()));
+    else
+        value = toDec(actual);
+
+    if (negative)
+        value *= -1;
+    return value;
 }
 
 int evalExpr(string word) {
@@ -549,7 +564,7 @@ void memoryDump() {
     cout << "Full dump at out.hex" << endl;
     
     ofstream outFile("out.hex");
-    for (i = 0; i < MEMORY_LENGTH+1; i++) {
+    for (i = 0; i < max_addr+1; i++) {
         outFile << hex << setfill ('0') << setw(2);
         outFile << setw(0) << dec << i << "=> X\"" << setw(4) << hex << primMemory[i] << "\",";// << endl;
     }

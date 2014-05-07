@@ -21,7 +21,8 @@ ARCHITECTURE behavior OF main_tb IS
             an : out  STD_LOGIC_VECTOR (3 downto 0);
             led : out STD_LOGIC_VECTOR (7 downto 0);
             value : in  STD_LOGIC_VECTOR (15 downto 0);
-            ledval : in STD_LOGIC_VECTOR (7 downto 0));
+            ledval : in STD_LOGIC_VECTOR (7 downto 0);
+            btn_up, btn_right, btn_down, btn_left : in STD_LOGIC);
   END COMPONENT;
 
   SIGNAL clk : std_logic := '0';
@@ -38,23 +39,15 @@ ARCHITECTURE behavior OF main_tb IS
   SIGNAL led : STD_LOGIC_VECTOR (7 downto 0) := X"00";
   SIGNAL value : STD_LOGIC_VECTOR (15 downto 0) := X"0000";
   SIGNAL ledval : STD_LOGIC_VECTOR (7 downto 0) := X"00";
-  
+
+  SIGNAL btn_up, btn_right, btn_down, btn_left : STD_LOGIC := '0';
+
   SIGNAL tb_running : boolean := true;
 BEGIN
 
   -- Component Instantiation
   uut: main PORT MAP(
-    clk => clk,
-    rst => rst,
-    step => step,
-    vgaRed => vgaRed,
-    vgaGreen => vgaGreen,
-    vgaBlue => vgaBlue,
-    seg => seg,
-    an => an,
-    led => led,
-    value => value,
-    ledval => ledval);
+    clk,rst, step, vgaRed, vgaGreen, vgaBlue, Hsync, Vsync, seg, an, led, value, ledval, btn_up, btn_right, btn_down, btn_left);
 
 
   clk_gen : process

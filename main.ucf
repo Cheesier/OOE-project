@@ -17,7 +17,10 @@ Net "rst" LOC = B8 | IOSTANDARD = LVCMOS33; #Bank = 0, pin name = IO_L33P, Sch n
 ######################################
 # Input				                 #
 ######################################
-Net "step" LOC = D9 | IOSTANDARD = LVCMOS33;
+Net "btn_up" LOC = A8 | IOSTANDARD = LVCMOS33;
+Net "btn_right" LOC = D9 | IOSTANDARD = LVCMOS33;
+Net "btn_down" LOC = C9 | IOSTANDARD = LVCMOS33;
+Net "btn_left" LOC = C4 | IOSTANDARD = LVCMOS33;
 
 ######################################
 # Multiplexed display                #
