@@ -259,6 +259,9 @@ void fillMemory(vector<string> & ret, int words) {
                     immediateValue = getAdr(ret[2]);
                     break;
                 case MODE_INDEXED:
+                    gra = getRegisterNumber(ret[1]);
+                    immediateValue = getAdr(ret[2]);
+                    grb = 15;
                     break;
             }
 
