@@ -17,7 +17,7 @@ using namespace std;
 
 int max_addr = 0;
 
-bool debug = true;
+bool debug = false;
 int numberToDisplay = 0x10;
 
 string *currentLine;
@@ -62,7 +62,7 @@ void initializeOps() {
             int i;
             int words = getWords(line, ret);
             
-            ops.insert(pair<string, int>( ret[1], toHex(ret[0])));
+            ops.insert(pair<string, int>( ret[1], toDec(ret[0])));
         }
         myfile.close();
     }

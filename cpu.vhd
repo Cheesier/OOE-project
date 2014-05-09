@@ -24,7 +24,7 @@ begin
                            useflag <= '1';
             when "0100" => value <= STD_LOGIC_VECTOR('0' & unsigned(A) + unsigned(B)); --add
                            useflag <= '1';
-            when "0101" => value <= STD_LOGIC_VECTOR('0' & unsigned(A) - unsigned(B)); --sub
+            when "0101" => value <= ('0' & A) - B; --sub
                            useflag <= '1';
             when "0110" => value <= '0' & A and B; -- and
                            useflag <= '1';
@@ -51,8 +51,12 @@ begin
                 else
                     zero <= '0';
                 end if;
-                if value(16) = '1' then carry <= '1'; end if;
-                if value(15) = '1' then negative <= '1'; end if;
+                if value(16) = '1' then carry <= '1';
+                else carry <= '0'; 
+                end if;
+                if value(15) = '1' then negative <= '1'; 
+                else negative <= '0'; 
+                end if;
                 overflow <= (A(15) xnor B(15)) and (A(15) xor value(15)); 
             end if; 
         end if;
@@ -108,9 +112,6 @@ architecture cpu_one of cpu is
     signal rSP : STD_LOGIC_VECTOR(15 downto 0) := X"0000";
     signal rLC : STD_LOGIC_VECTOR(7 downto 0) := X"00";
 
-    signal rALU : STD_LOGIC_VECTOR(16 downto 0) := '0' & X"0000";
-    signal fADD : STD_LOGIC := '0';
-
     -- Flags
     signal fZ : STD_LOGIC := '1';
     signal fN : STD_LOGIC := '0';
@@ -120,7 +121,7 @@ architecture cpu_one of cpu is
 
     -- Primary memory
     type PrimMem_type is array (0 to 2047) of STD_LOGIC_VECTOR(15 downto 0);
-    signal PrimMem : PrimMem_type := (0=> X"0500",1=> X"0000",2=> X"0510",3=> X"0000",4=> X"0900",5=> X"0001",6=> X"5500",7=> X"07ff",8=> X"4500",9=> X"000d",10=> X"3400",11=> X"2500",12=> X"0008",13=> X"5e10",14=> X"8000",15=> X"5e00",16=> X"8001",17=> X"1e10",18=> X"8002",19=> X"1e00",20=> X"8003",21=> X"4800",22=> X"0000",
+    signal PrimMem : PrimMem_type := (0=> X"5500",1=> X"07ff",2=> X"4500",3=> X"0007",4=> X"3400",5=> X"2500",6=> X"0002",7=> X"0a10",8=> X"9001",9=> X"6210",10=> X"8000",11=> X"2210",12=> X"8002",13=> X"0d10",14=> X"9001",15=> X"0a10",16=> X"9000",17=> X"2210",18=> X"8001",19=> X"6210",20=> X"8003",21=> X"0d10",22=> X"9000",23=> X"4800",24=> X"0000",
                                       others=> X"0000");
 
     -- Micro memory
@@ -136,8 +137,8 @@ architecture cpu_one of cpu is
                                     8=>X"03500200",
                                     9=>X"05A00600",
                                     10=>X"05B00600",
-                                    11=>X"0A300600",
-                                    12=>X"0BA00600",
+                                    11=>X"05100000",
+                                    12=>X"0A300600",
                                     13=>X"15000000",
                                     14=>X"4A000000",
                                     15=>X"07A00600",
@@ -167,19 +168,36 @@ architecture cpu_one of cpu is
                                     39=>X"0A320600",
                                     40=>X"00010000",
                                     41=>X"09100000",
-                                    42=>X"01A00600",
+                                    42=>X"03A00600",
                                     43=>X"05900600",
-                                    44=>X"15000000",
-                                    45=>X"5A000000",
-                                    46=>X"07A00600",
-                                    47=>X"15000000",
-                                    48=>X"5B000000",
-                                    49=>X"07B00600",
+                                    44=>X"1B000000",
+                                    45=>X"55000000",
+                                    46=>X"07B00600",
+                                    47=>X"1A000000",
+                                    48=>X"55000000",
+                                    49=>X"07A00600",
                                     50=>X"05008000",
                                     51=>X"1A000000",
                                     52=>X"D0004000",
                                     53=>X"00003434",
                                     54=>X"07A00600",
+                                    55=>X"05008000",
+                                    56=>X"1A000000",
+                                    57=>X"90004000",
+                                    58=>X"00003434",
+                                    59=>X"07A00600",
+                                    60=>X"15000000",
+                                    61=>X"6A000000",
+                                    62=>X"07A00600",
+                                    63=>X"15000000",
+                                    64=>X"6B000000",
+                                    65=>X"07B00600",
+                                    66=>X"15000000",
+                                    67=>X"7A000000",
+                                    68=>X"07A00600",
+                                    69=>X"15000000",
+                                    70=>X"7B000000",
+                                    71=>X"07B00600",
                                     others=> X"00000000");
 
     -- uPC
@@ -202,8 +220,8 @@ architecture cpu_one of cpu is
                             1=>"000001010", --MOVEV High
                             2=>"000001001", --MOVE
                             3=>"000001011", --STORE
-                            4=>"000001100", --STOREV Low
-                            5=>"000001100", --STOREV High
+                            --4=>"000001100", --STOREV Low
+                            --5=>"000001100", --STOREV High
                             6=>"000010000", --ADDV Low
                             7=>"000010000", --ADDV High
                             8=>"000001101", --ADD
@@ -223,6 +241,14 @@ architecture cpu_one of cpu is
                             22=>"000101100", --SUBV Low
                             23=>"000101100", --SUBV High
                             24=>"000101111", --SUB
+                            25=>"000110010", --LSR
+                            26=>"000110111", --LSL
+                            27=>"000111100", --AND
+                            28=>"000111111", --ANDV Low
+                            29=>"000111111", --ANDV High
+                            30=>"001000101", --ORV Low
+                            31=>"001000101", --ORV High
+                            32=>"001000010", --OR
                             others=>"000000000");
 
     type K2_type is array (0 to 3) of STD_LOGIC_VECTOR(8 downto 0);
@@ -246,7 +272,7 @@ begin
     ctrlword <= uMem(conv_integer(uPC));
 
     
-    led_driver: leddriver port map (clk, rst, seg, an, led, rGR(0), rPC(7 downto 0));
+    led_driver: leddriver port map (clk, rst, seg, an, led, rGR(1), rPC(7 downto 0));
     alu_instance: alu port map(clk, cALU, rAR, databus, rAR, fC, fZ, fN, fO);
     
 
@@ -309,16 +335,10 @@ begin
                 end case;
                 
                 -- FROM BUS
-                if cFB = "1011" then
-                    vr_we <= '1';
-                else
-                    vr_we <= '0';
-                end if;
-
                 case cFB is
                     when "0001" => rASR <= databus;
                     when "0010" => rIR <= databus;
-                    when "0011" => PrimMem(conv_integer(rASR)) <= databus;
+                    when "0011" => if (rASR(15) = '0') then PrimMem(conv_integer(rASR)) <= databus; end if;
                     when "0100" => rPC <= databus;
                     when "0101" => rDR <= databus;
                     when "0110" => null; -- can't write to uM
@@ -331,12 +351,22 @@ begin
                         else
                             rGR(conv_integer(rIR(3 downto 0))) <= databus;
                         end if;
-                    when "1011" => vr_i <= databus;
                     when others => null;
                 end case;
             end if;
         end if;
     end process;
+
+    process(cFB, rASR) begin
+        if cFB = "0011" and rASR(15 downto 12) = X"9" then -- 9xxx address
+            vr_we <= '1';
+            vr_i <= databus;
+        else
+            vr_we <= '0';
+        end if;
+    end process;
+
+    vr_addr <= rASR(4 downto 0);
 
     -- TO BUS
     with cTB select
@@ -350,7 +380,7 @@ begin
                 rHR when "1000",
                 rSP when "1001",
                 tempGR when "1010",
-                vr_o when "1011",
+                --vr_o when "1011",
                 X"0000" when others;
 
     -- PM/MemMap
@@ -364,6 +394,14 @@ begin
               "000000000000000" & right when X"8001",
               "000000000000000" & down when X"8002",
               "000000000000000" & left when X"8003",
+              vr_o when X"9000",vr_o when X"9001",vr_o when X"9002",vr_o when X"9003",
+              vr_o when X"9004",vr_o when X"9005",vr_o when X"9006",vr_o when X"9007",
+              vr_o when X"9008",vr_o when X"9009",vr_o when X"900A",vr_o when X"900B",
+              vr_o when X"900C",vr_o when X"900D",vr_o when X"900E",vr_o when X"900F",
+              vr_o when X"9010",vr_o when X"9011",vr_o when X"9012",vr_o when X"9013",
+              vr_o when X"9014",vr_o when X"9015",vr_o when X"9016",vr_o when X"9017",
+              vr_o when X"9018",vr_o when X"9019",vr_o when X"901A",vr_o when X"901B",
+              vr_o when X"901C",vr_o when X"901D",vr_o when X"901E",vr_o when X"901F",
               X"EEEE" when others;
 
     -- M bit
@@ -371,5 +409,4 @@ begin
     tempGR <= rGR(conv_integer(rIR(7 downto 4))) when '0',
               rGR(conv_integer(rIR(3 downto 0))) when others;
 
-    vr_addr <= rIR(10) & rIR(7 downto 4);
 end cpu_one;

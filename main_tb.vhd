@@ -13,7 +13,7 @@ ARCHITECTURE behavior OF main_tb IS
 
   -- Component Declaration
   COMPONENT main
-    Port ( clk,rst,step: in  STD_LOGIC;
+    Port ( clk,rst: in  STD_LOGIC;
             vgaRed, vgaGreen: out  STD_LOGIC_VECTOR (2 downto 0);
             vgaBlue : out  STD_LOGIC_VECTOR (2 downto 1);
             Hsync,Vsync : out  STD_LOGIC;
@@ -27,7 +27,6 @@ ARCHITECTURE behavior OF main_tb IS
 
   SIGNAL clk : std_logic := '0';
   SIGNAL rst : std_logic := '0';
-  SIGNAL step : std_logic := '0';
   SIGNAL vgaRed : std_logic_vector(2 downto 0) := "000";
   SIGNAL vgaGreen : std_logic_vector(2 downto 0) := "000";
   SIGNAL vgaBlue : std_logic_vector(2 downto 1) := "00";
@@ -40,14 +39,15 @@ ARCHITECTURE behavior OF main_tb IS
   SIGNAL value : STD_LOGIC_VECTOR (15 downto 0) := X"0000";
   SIGNAL ledval : STD_LOGIC_VECTOR (7 downto 0) := X"00";
 
-  SIGNAL btn_up, btn_right, btn_down, btn_left : STD_LOGIC := '0';
-
+  SIGNAL btn_up, btn_down, btn_left : STD_LOGIC := '0';
+  SIGNAL btn_right : STD_LOGIC := '1';
+ 
   SIGNAL tb_running : boolean := true;
 BEGIN
 
   -- Component Instantiation
   uut: main PORT MAP(
-    clk,rst, step, vgaRed, vgaGreen, vgaBlue, Hsync, Vsync, seg, an, led, value, ledval, btn_up, btn_right, btn_down, btn_left);
+    clk,rst, vgaRed, vgaGreen, vgaBlue, Hsync, Vsync, seg, an, led, value, ledval, btn_up, btn_right, btn_down, btn_left);
 
 
   clk_gen : process
