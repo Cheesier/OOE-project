@@ -70,6 +70,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity cpu is
     Port (clk,rst : in  STD_LOGIC;
+        sw: in STD_LOGIC_VECTOR(7 downto 0);
         seg: out  STD_LOGIC_VECTOR(7 downto 0);
         an : out  STD_LOGIC_VECTOR (3 downto 0);
         led : out STD_LOGIC_VECTOR (7 downto 0);
@@ -121,7 +122,7 @@ architecture cpu_one of cpu is
 
     -- Primary memory
     type PrimMem_type is array (0 to 2047) of STD_LOGIC_VECTOR(15 downto 0);
-    signal PrimMem : PrimMem_type := (0=> X"5500",1=> X"07ff",2=> X"4500",3=> X"0007",4=> X"3400",5=> X"2500",6=> X"0002",7=> X"0a10",8=> X"9001",9=> X"6210",10=> X"8000",11=> X"2210",12=> X"8002",13=> X"0d10",14=> X"9001",15=> X"0a10",16=> X"9000",17=> X"2210",18=> X"8001",19=> X"6210",20=> X"8003",21=> X"0d10",22=> X"9000",23=> X"4800",24=> X"0000",
+    signal PrimMem : PrimMem_type := (0=> X"3500",1=> X"07ff",2=> X"2500",3=> X"0007",4=> X"1c00",5=> X"0d00",6=> X"0002",7=> X"0210",8=> X"9001",9=> X"3a10",10=> X"8000",11=> X"0a10",12=> X"8002",13=> X"0510",14=> X"9001",15=> X"0220",16=> X"9000",17=> X"0a20",18=> X"8001",19=> X"3a20",20=> X"8003",21=> X"0520",22=> X"9000",23=> X"2800",24=> X"0000",
                                       others=> X"0000");
 
     -- Micro memory
@@ -136,68 +137,53 @@ architecture cpu_one of cpu is
                                     7=>X"03100000",
                                     8=>X"03500200",
                                     9=>X"05A00600",
-                                    10=>X"05B00600",
-                                    11=>X"05100000",
-                                    12=>X"0A300600",
-                                    13=>X"15000000",
-                                    14=>X"4A000000",
-                                    15=>X"07A00600",
-                                    16=>X"15000000",
-                                    17=>X"4B000000",
-                                    18=>X"07B00600",
-                                    19=>X"05400600",
-                                    20=>X"00002A13",
+                                    10=>X"05100000",
+                                    11=>X"0A300600",
+                                    12=>X"15000000",
+                                    13=>X"4A000000",
+                                    14=>X"07A00600",
+                                    15=>X"05400600",
+                                    16=>X"00002A0F",
+                                    17=>X"00000600",
+                                    18=>X"0000220F",
+                                    19=>X"00000600",
+                                    20=>X"0000240F",
                                     21=>X"00000600",
-                                    22=>X"00002213",
+                                    22=>X"00003816",
                                     23=>X"00000600",
-                                    24=>X"00002413",
-                                    25=>X"00000600",
-                                    26=>X"0000381A",
-                                    27=>X"00000600",
-                                    28=>X"1A000000",
-                                    29=>X"55000600",
-                                    30=>X"1B000000",
-                                    31=>X"55000600",
+                                    24=>X"1A000000",
+                                    25=>X"55000600",
+                                    26=>X"09100000",
+                                    27=>X"04300000",
+                                    28=>X"05420600",
+                                    29=>X"00010000",
+                                    30=>X"09100000",
+                                    31=>X"03400600",
                                     32=>X"09100000",
-                                    33=>X"04300000",
-                                    34=>X"05420600",
-                                    35=>X"00010000",
-                                    36=>X"09100000",
-                                    37=>X"03400600",
-                                    38=>X"09100000",
-                                    39=>X"0A320600",
-                                    40=>X"00010000",
-                                    41=>X"09100000",
-                                    42=>X"03A00600",
-                                    43=>X"05900600",
-                                    44=>X"1B000000",
-                                    45=>X"55000000",
-                                    46=>X"07B00600",
+                                    33=>X"0A320600",
+                                    34=>X"00010000",
+                                    35=>X"09100000",
+                                    36=>X"03A00600",
+                                    37=>X"05900600",
+                                    38=>X"1A000000",
+                                    39=>X"55000000",
+                                    40=>X"07A00600",
+                                    41=>X"05008000",
+                                    42=>X"1A000000",
+                                    43=>X"D0004000",
+                                    44=>X"00003434",
+                                    45=>X"07A00600",
+                                    46=>X"05008000",
                                     47=>X"1A000000",
-                                    48=>X"55000000",
-                                    49=>X"07A00600",
-                                    50=>X"05008000",
-                                    51=>X"1A000000",
-                                    52=>X"D0004000",
-                                    53=>X"00003434",
-                                    54=>X"07A00600",
-                                    55=>X"05008000",
-                                    56=>X"1A000000",
-                                    57=>X"90004000",
-                                    58=>X"00003434",
-                                    59=>X"07A00600",
-                                    60=>X"15000000",
-                                    61=>X"6A000000",
-                                    62=>X"07A00600",
-                                    63=>X"15000000",
-                                    64=>X"6B000000",
-                                    65=>X"07B00600",
-                                    66=>X"15000000",
-                                    67=>X"7A000000",
-                                    68=>X"07A00600",
-                                    69=>X"15000000",
-                                    70=>X"7B000000",
-                                    71=>X"07B00600",
+                                    48=>X"90004000",
+                                    49=>X"00003434",
+                                    50=>X"07A00600",
+                                    51=>X"15000000",
+                                    52=>X"6A000000",
+                                    53=>X"07A00600",
+                                    54=>X"15000000",
+                                    55=>X"7A000000",
+                                    56=>X"07A00600",
                                     others=> X"00000000");
 
     -- uPC
@@ -216,40 +202,26 @@ architecture cpu_one of cpu is
     alias cADR : STD_LOGIC_VECTOR(8 downto 0) is ctrlword(8 downto 0);
 
     type K1_type is array (0 to 63) of STD_LOGIC_VECTOR(8 downto 0);
-    signal K1 : K1_type := (0=>"000001010", --MOVEV Low
-                            1=>"000001010", --MOVEV High
-                            2=>"000001001", --MOVE
-                            3=>"000001011", --STORE
-                            --4=>"000001100", --STOREV Low
-                            --5=>"000001100", --STOREV High
-                            6=>"000010000", --ADDV Low
-                            7=>"000010000", --ADDV High
-                            8=>"000001101", --ADD
-                            9=>"000010011", --BRA
-                            10=>"000010100", --BCS
-                            11=>"000010110", --BEQ
-                            12=>"000011000", --BNE
-                            13=>"000011010", --WVS
-                            14=>"000011110", --CMPV Low
-                            15=>"000011110", --CMPV High
-                            16=>"000011100", --CMP
-                            17=>"000100000", --JSR
-                            18=>"000100011", --RTS
-                            19=>"000100110", --PUSH
-                            20=>"000101000", --POP
-                            21=>"000101011", --SSP
-                            22=>"000101100", --SUBV Low
-                            23=>"000101100", --SUBV High
-                            24=>"000101111", --SUB
-                            25=>"000110010", --LSR
-                            26=>"000110111", --LSL
-                            27=>"000111100", --AND
-                            28=>"000111111", --ANDV Low
-                            29=>"000111111", --ANDV High
-                            30=>"001000101", --ORV Low
-                            31=>"001000101", --ORV High
-                            32=>"001000010", --OR
-                            others=>"000000000");
+    signal K1 : K1_type := (0=>"000001001", --MOVE
+                            1=>"000001010", --STORE
+                            2=>"000001100", --ADD
+                            3=>"000001111", --BRA
+                            4=>"000010000", --BCS
+                            5=>"000010010", --BEQ
+                            6=>"000010100", --BNE
+                            7=>"000010110", --WVS
+                            8=>"000011000", --CMP
+                            9=>"000011010", --JSR
+                            10=>"000011101", --RTS
+                            11=>"000100000", --PUSH
+                            12=>"000100010", --POP
+                            13=>"000100101", --SSP
+                            14=>"000100110", --SUB
+                            15=>"000101001", --LSR
+                            16=>"000101110", --LSL
+                            17=>"000110011", --AND
+                            18=>"000110110", --OR
+                            others=>"111111111"); --HULT
 
     type K2_type is array (0 to 3) of STD_LOGIC_VECTOR(8 downto 0);
     signal K2 : K2_type := (0=>"000000011", --reg-reg
@@ -272,7 +244,7 @@ begin
     ctrlword <= uMem(conv_integer(uPC));
 
     
-    led_driver: leddriver port map (clk, rst, seg, an, led, rGR(1), rPC(7 downto 0));
+    led_driver: leddriver port map (clk, rst, seg, an, led, rGR(2), rPC(7 downto 0));
     alu_instance: alu port map(clk, cALU, rAR, databus, rAR, fC, fZ, fN, fO);
     
 
@@ -331,6 +303,7 @@ begin
                         uPC <= cADR; 
                         SuPC <= uPC+1;
                     when "11110" => uPC <= SuPC;
+                    when "11111" => null;
                     when others => null;
                 end case;
                 
@@ -338,7 +311,12 @@ begin
                 case cFB is
                     when "0001" => rASR <= databus;
                     when "0010" => rIR <= databus;
-                    when "0011" => if (rASR(15) = '0') then PrimMem(conv_integer(rASR)) <= databus; end if;
+                    when "0011" => 
+                        if (rASR(15) = '0') then
+                            PrimMem(conv_integer(rASR)) <= databus;
+                        elsif (rASR(15 downto 12) = X"9") then -- VR
+                            vr_i <= databus;
+                        end if;
                     when "0100" => rPC <= databus;
                     when "0101" => rDR <= databus;
                     when "0110" => null; -- can't write to uM
@@ -357,10 +335,10 @@ begin
         end if;
     end process;
 
-    process(cFB, rASR) begin
+    process(cFB, rASR, databus) begin
         if cFB = "0011" and rASR(15 downto 12) = X"9" then -- 9xxx address
             vr_we <= '1';
-            vr_i <= databus;
+            --vr_i <= databus;
         else
             vr_we <= '0';
         end if;
@@ -394,6 +372,9 @@ begin
               "000000000000000" & right when X"8001",
               "000000000000000" & down when X"8002",
               "000000000000000" & left when X"8003",
+              X"00" & sw when X"8004",
+              --X"00" & ledval when X"A000",
+              --value when X"A001",
               vr_o when X"9000",vr_o when X"9001",vr_o when X"9002",vr_o when X"9003",
               vr_o when X"9004",vr_o when X"9005",vr_o when X"9006",vr_o when X"9007",
               vr_o when X"9008",vr_o when X"9009",vr_o when X"900A",vr_o when X"900B",

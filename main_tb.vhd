@@ -17,6 +17,7 @@ ARCHITECTURE behavior OF main_tb IS
             vgaRed, vgaGreen: out  STD_LOGIC_VECTOR (2 downto 0);
             vgaBlue : out  STD_LOGIC_VECTOR (2 downto 1);
             Hsync,Vsync : out  STD_LOGIC;
+            sw : in STD_LOGIC_VECTOR(7 downto 0);
             seg : out  STD_LOGIC_VECTOR(7 downto 0);
             an : out  STD_LOGIC_VECTOR (3 downto 0);
             led : out STD_LOGIC_VECTOR (7 downto 0);
@@ -33,6 +34,7 @@ ARCHITECTURE behavior OF main_tb IS
   SIGNAL Hsync : std_logic := '0';
   SIGNAL Vsync : std_logic := '0';
 
+  SIGNAL sw : std_logic_vector(7 downto 0) := X"00";
   SIGNAL seg : std_logic_vector(7 downto 0) := X"00";
   SIGNAL an :  std_logic_vector(3 downto 0) := X"0";
   SIGNAL led : STD_LOGIC_VECTOR (7 downto 0) := X"00";
@@ -47,7 +49,7 @@ BEGIN
 
   -- Component Instantiation
   uut: main PORT MAP(
-    clk,rst, vgaRed, vgaGreen, vgaBlue, Hsync, Vsync, seg, an, led, value, ledval, btn_up, btn_right, btn_down, btn_left);
+    clk,rst, vgaRed, vgaGreen, vgaBlue, Hsync, Vsync, sw, seg, an, led, value, ledval, btn_up, btn_right, btn_down, btn_left);
 
 
   clk_gen : process

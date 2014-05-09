@@ -150,16 +150,16 @@ architecture gpu_one of gpu is
     signal counter : STD_LOGIC_VECTOR(23 downto 0) := "000000000000000000000000";
 begin
     
-    process(vr_i, vr_we, vr_addr, rst) begin
+    process(vr_i, vr_we, vr_addr, rst, rVR) begin
         if rst='1' then
             rVR <= (others=> X"0000");
         else
             if vr_we = '1' then
                 rVR(conv_integer(vr_addr)) <= vr_i;
             end if;
+            vr_o <= rVR(conv_integer(vr_addr));
         end if;
     end process;
-    vr_o <= rVR(conv_integer(vr_addr));
 
     -- Pixel clock
     process(clk) begin

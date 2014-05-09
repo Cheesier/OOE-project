@@ -7,6 +7,7 @@ entity main is
             vgaRed, vgaGreen: out STD_LOGIC_VECTOR (2 downto 0);
             vgaBlue : out STD_LOGIC_VECTOR (2 downto 1);
             Hsync,Vsync : out STD_LOGIC;
+            sw : in STD_LOGIC_VECTOR(7 downto 0);
             seg : out STD_LOGIC_VECTOR(7 downto 0);
             an : out STD_LOGIC_VECTOR (3 downto 0);
             led : out STD_LOGIC_VECTOR (7 downto 0);
@@ -38,6 +39,7 @@ architecture Behavioral of main is
 
     component cpu
     	Port ( clk,rst : in  STD_LOGIC;
+        sw : in STD_LOGIC_VECTOR(7 downto 0);
         seg: out  STD_LOGIC_VECTOR(7 downto 0);
         an : out  STD_LOGIC_VECTOR (3 downto 0);
         led : out STD_LOGIC_VECTOR (7 downto 0);
@@ -57,7 +59,7 @@ architecture Behavioral of main is
 
 begin
     gpu_instance : gpu port map (clk, rst, vgaRed, vgaGreen, vgaBlue, Hsync, Vsync, vr_we, vr_addr, vr_i, vr_o, fV);
-    cpu_instance : cpu port map (clk, rst, seg, an, led, vr_we, vr_addr, vr_i, vr_o, fV, cUp, cRight, cDown, cLeft);
+    cpu_instance : cpu port map (clk, rst, sw, seg, an, led, vr_we, vr_addr, vr_i, vr_o, fV, cUp, cRight, cDown, cLeft);
     boardinput_driver : boardinput port map(clk, btn_up, btn_right, btn_down, btn_left, cUp, cRight, cDown, cLeft);
 
 end Behavioral;
