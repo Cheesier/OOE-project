@@ -1,46 +1,172 @@
+:coldboot
+	MOVE GR0, 0
+	MOVE GR1, 0x40
+	MOVE GR2, 1
+	STORE GR1, x_pos
+	STORE GR0, y_pos
+	STORE GR0, z_pos
+	STORE GR0, x_vel_dir
+	STORE GR0, x_vel
+	STORE GR0, y_vel_dir
+	STORE GR0, y_vel
+	STORE GR0, x_acc_dir
+	STORE GR0, x_acc
+	STORE GR2, y_acc_dir		;; gravity direction down 
+	STORE GR2, y_acc 			;; gravity = 1
+	BRA boot
+
+:x_pos dat 0
+:y_pos dat 0
+:z_pos dat 0
+
+:x_vel_dir dat 0 				;; 0 if left, 1 if right
+:x_vel dat 0
+:x_vel_dir dat 0 				;; 0 if up, 1 if down
+:y_vel dat 0
+
+:x_acc_dir dat 0 				;; 0 if left, 1 if right
+:x_acc dat 0
+:y_acc_dir dat 0 				;; 0 if up, 1 if down
+:y_acc dat 0
+
 :boot
 	SSP 0x7FF
 :loop
 	JSR input
+	JSR handle_velocity
+	JSR handle_movement
+	JSR render_char
+	MOVE GR2, [x_vel]
+	MOVE GR3, [x_acc]
+	MOVE GR4, [x_acc_dir]
+	MOVE GR5, [x_vel_dir]
 	WVS
 	BRA loop
 
-
 :input
-	;;PUSH GR1
+	PUSH GR0
+	PUSH GR1
 
-	MOVE GR0, [0x8004]
+:check_up
+	;;MOVE GR0, [0x8000]		;; up
+	;;CMP GR0, 1
+	;;BNE check_right			;; check next if button not down
+;;
+;;
+	;;MOVE GR1, [y_vel]
+	;;CMP GR1, 
+	;;MOVE GR1, 24
+	;;STORE GR1, y_vel
 
-	CMP GR0, 0
-	BNE sp1
+	MOVE GR0, [0x8001]
+	MOVE GR1, [0x8003]
+	CMP GR0, GR1
+	BMI acc_left
+	BEQ no_x_input
 
-	MOVE GR1, [0x9001]
-	SUB GR1, [0x8000]		;; up
-	ADD GR1, [0x8002]		;; down
-	STORE GR1, 0x9001
+:acc_right
+	MOVE GR1, 1 				;; acceleration
+	STORE GR1, x_acc
+	MOVE GR1, 1 				;; acc directed right
+	STORE GR1, x_acc_dir
+	BRA done_directions
 
-	MOVE GR1, [0x9000]		;; 
-	ADD GR1, [0x8001]		;; right
-	SUB GR1, [0x8003]		;; left
-	STORE GR1, 0x9000
+:acc_left
+	MOVE GR1, 1					;; acceleration
+	STORE GR1, x_acc
+	MOVE GR1, 0 				;; acc directed left
+	STORE GR1, x_acc_dir
+	BRA done_directions
 
-	BRA input_done
+:no_x_input
+	MOVE GR1, 0 				;; acceleration = 0
+	STORE GR1, x_acc
+	BRA done_directions
 
-:sp1
-	CMP GR0, 1
-	BNE input_done
-
-	MOVE GR1, [0x9003]
-	SUB GR1, [0x8000]		;; up
-	ADD GR1, [0x8002]		;; down
-	STORE GR1, 0x9003
-
-	MOVE GR1, [0x9002]		;; 
-	ADD GR1, [0x8001]		;; right
-	SUB GR1, [0x8003]		;; left
-	STORE GR1, 0x9002
-
-:input_done
-
-	;;POP GR1
+:done_directions
+	POP GR1
+	POP GR0
 	RTS
+
+
+;; Handle all the Velocity thingies
+:handle_velocity
+	PUSH GR0
+	PUSH GR1
+
+	MOVE GR0, [x_vel_dir]
+	CMP GR0, [x_acc_dir]
+	BEQ x_dir_same
+	BNE x_dir_not_same
+
+:x_dir_same
+	MOVE GR0, [x_vel]
+	ADD GR0, [x_acc]
+	STORE GR0, x_vel
+	BRA x_vel_clamp
+
+:x_dir_not_same
+	MOVE GR0, [x_vel]
+	SUB GR0, [x_acc]
+	BMI x_vel_negative				;; jump to inverter
+	STORE GR0, x_vel
+	BRA x_vel_clamp
+
+:x_vel_negative
+	INV GR0, [x_vel]
+	STORE GR0, x_vel
+	INV GR0, [x_vel_dir]
+	ADD GR0, 1
+	STORE GR0, x_vel_dir
+
+:x_vel_clamp
+	MOVE GR0, [x_vel]
+	CMP GR0, 3					;; max speed
+	BMI x_vel_done
+	MOVE GR0, 3					;; max speed
+	STORE GR0, x_vel
+
+:x_vel_done
+
+	POP GR1
+	POP GR0
+	RTS
+
+:handle_movement
+	PUSH GR0
+	PUSH GR1
+	PUSH GR8
+
+	MOVE GR0, [x_vel]
+	MOVE GR1, [x_pos]
+	;;LSR GR0, 4
+	MOVE GR8, [x_vel_dir]
+	CMP GR8, 1						;; handle movement right?
+	BNE x_handle_movement_left
+:x_handle_movement_right
+	ADD GR1, GR0					;; POS + Velocity
+	BRA x_handle_movement_done
+:x_handle_movement_left
+	SUB GR1, GR0					;; POS - Velocity
+:x_handle_movement_done
+	STORE GR1, x_pos
+
+	POP GR8
+	POP GR1
+	POP GR0
+	RTS
+
+
+
+:render_char
+	PUSH GR0
+
+	MOVE GR0, [x_pos]
+	STORE GR0, 0x9000
+	MOVE GR0, [y_pos]
+	STORE GR0, 0x9001
+
+	POP GR0
+	RTS
+
+

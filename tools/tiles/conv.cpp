@@ -8,12 +8,13 @@
 
 using namespace std;
 
-#define MAX_LAYERS 4
+#define MAX_LAYERS 8
 #define MAX_WIDTH 100
 #define MAX_HEIGHT 40
 int mapArray[MAX_LAYERS][MAX_WIDTH*MAX_HEIGHT];
 int layers = -1;
 int elements = 0;
+int addr = 0;
 
 void memoryDump() {
   int i;
@@ -48,7 +49,35 @@ void memoryDump() {
       else if ((current+1) % 100 == 0)
         outFile << "),"; // endl
     }
+
     outFile << endl;
+
+    id = 0;
+    int row;
+    int col;
+    for (row = 0; row < MAX_HEIGHT; row++) {
+      for (col = 0; col-16 < MAX_WIDTH; col += 16) {
+        outFile << dec << addr << "=> (";
+        outFile << "X\"";
+        outFile << hex << setfill('0') << setw(4);
+
+        addr++;
+        int val = 0;
+
+        int num;
+        for (num = 0; num < 16; num++) {
+          if (num != 0)
+            val = val << 1;
+          if (col+num < 100 && mapArray[l][row*100+col+num] == 2)
+            val += 1;
+        }
+
+        outFile << val << "), ";
+
+      }
+    }
+
+    outFile << endl << endl;
   }
   outFile.close();
   

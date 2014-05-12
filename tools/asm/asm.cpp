@@ -18,7 +18,7 @@ using namespace std;
 int max_addr = 0;
 
 bool debug = false;
-int numberToDisplay = 0x10;
+int numberToDisplay = 0x100;
 
 string *currentLine;
 int currentLineNum;
@@ -333,7 +333,7 @@ void fillMemory(vector<string> & ret, int words) {
 void performSpecialOp(int operation, string word) {
     //int arg = atoi(word.c_str()); // decimal
     int arg;
-    if (word.substr(0,2).compare("0x") == 0)
+    if (word.substr(0,2).compare("0X") == 0)
         arg = toHex(word.substr(2));
     else
         arg = toDec(word);
@@ -438,8 +438,8 @@ int getWords(string line, vector<string> & ret) {
                 break;
             default:
                 open = true;
-                if (mightBeHex && tolower(line[i]) == 'x') {
-                    ret[count] += tolower(line[i]);
+                if (mightBeHex && toupper(line[i]) == 'X') {
+                    ret[count] += toupper(line[i]);
                     mightBeHex = false;
                 }
                 else
@@ -518,7 +518,7 @@ int getAdr(string word) {
         default:
             actual = word;
     }
-    if (actual.substr(0,2).compare("0x") == 0)
+    if (actual.substr(0,2).compare("0X") == 0)
         value = toHex(actual.substr(2, word.length()));
     else
         value = toDec(actual);
@@ -567,7 +567,7 @@ void memoryDump() {
     cout << "Full dump at out.hex" << endl;
     
     ofstream outFile("out.hex");
-    for (i = 0; i < max_addr+1; i++) {
+    for (i = 0; i < max_addr; i++) {
         outFile << hex << setfill ('0') << setw(2);
         outFile << setw(0) << dec << i << "=> X\"" << setw(4) << hex << primMemory[i] << "\",";// << endl;
     }

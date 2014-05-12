@@ -147,17 +147,29 @@ architecture gpu_one of gpu is
     alias x_displacement3 : STD_LOGIC_VECTOR(15 downto 0) is rVR(22);
     alias y_displacement3 : STD_LOGIC_VECTOR(15 downto 0) is rVR(23);
 
+    alias sprite_0_layer : STD_LOGIC_VECTOR(1 downto 0) is rVR(26)(15 downto 14);
+    alias sprite_1_layer : STD_LOGIC_VECTOR(1 downto 0) is rVR(26)(13 downto 12);
+    alias sprite_2_layer : STD_LOGIC_VECTOR(1 downto 0) is rVR(26)(11 downto 10);
+    alias sprite_3_layer : STD_LOGIC_VECTOR(1 downto 0) is rVR(26)(9 downto 8);
+    alias sprite_4_layer : STD_LOGIC_VECTOR(1 downto 0) is rVR(26)(7 downto 6);
+    alias sprite_5_layer : STD_LOGIC_VECTOR(1 downto 0) is rVR(26)(5 downto 4);
+    alias sprite_6_layer : STD_LOGIC_VECTOR(1 downto 0) is rVR(26)(3 downto 2);
+    alias sprite_7_layer : STD_LOGIC_VECTOR(1 downto 0) is rVR(26)(1 downto 0);
+
     signal counter : STD_LOGIC_VECTOR(23 downto 0) := "000000000000000000000000";
 begin
     
-    process(vr_i, vr_we, vr_addr, rst, rVR) begin
-        if rst='1' then
-            rVR <= (others=> X"0000");
-        else
-            if vr_we = '1' then
-                rVR(conv_integer(vr_addr)) <= vr_i;
+    --process(vr_i, vr_we, vr_addr, rst, rVR) begin
+    process(clk) begin
+        if rising_edge(clk) then
+            if rst='1' then
+                rVR <= (others=> X"0000");
+            else
+                if vr_we = '1' then
+                    rVR(conv_integer(vr_addr)) <= vr_i;
+                end if;
+                vr_o <= rVR(conv_integer(vr_addr));
             end if;
-            vr_o <= rVR(conv_integer(vr_addr));
         end if;
     end process;
 
@@ -303,72 +315,84 @@ begin
                 current_pixel3 <= tile_pixel_mem(conv_integer(current_tile3(4 downto 0)))(conv_integer((tileyoff - y_displacement3(3 downto 0) - 1) &
                                                                                            (tilexoff - x_displacement3(3 downto 0) - 1)));
             elsif pixel = "10" then --sprite pixels
-                if conv_integer(xctr(11 downto 0)) >= conv_integer(sprite0_x_displacement(15 downto 0)) and conv_integer(xctr(11 downto 0)) < conv_integer(sprite0_x_displacement(15 downto 0) + 16) and 
-                   conv_integer(yctr(11 downto 0)) >= conv_integer(sprite0_y_displacement(15 downto 0)) and conv_integer(yctr(11 downto 0)) < conv_integer(sprite0_y_displacement(15 downto 0) + 16) then
+                if xctr(11 downto 0) >= sprite0_x_displacement(15 downto 0) and xctr(11 downto 0) < sprite0_x_displacement(15 downto 0) + 16 and 
+                   yctr(11 downto 0) >= sprite0_y_displacement(15 downto 0) and yctr(11 downto 0) < sprite0_y_displacement(15 downto 0) + 16 then
                     current_sprite_pixel0 <= sprite_pixel_mem(conv_integer(rVR(24)(15 downto 12)))(conv_integer((tileyoff - sprite0_y_displacement(3 downto 0)) & 
                                                                                                                 (tilexoff - sprite0_x_displacement(3 downto 0))));
                 else current_sprite_pixel0 <= X"00"; end if;
-                if xctr(10 downto 0) >= sprite1_x_displacement(10 downto 0) and xctr(10 downto 0) < sprite1_x_displacement(10 downto 0) + 16 and 
-                   yctr(10 downto 0) >= sprite1_y_displacement(10 downto 0) and yctr(10 downto 0) < sprite1_y_displacement(10 downto 0) + 16 then
+                if xctr(11 downto 0) >= sprite1_x_displacement(15 downto 0) and xctr(11 downto 0) < sprite1_x_displacement(15 downto 0) + 16 and 
+                   yctr(11 downto 0) >= sprite1_y_displacement(15 downto 0) and yctr(11 downto 0) < sprite1_y_displacement(15 downto 0) + 16 then
                     current_sprite_pixel1 <= sprite_pixel_mem(conv_integer(rVR(24)(11 downto 8)))(conv_integer((tileyoff - sprite1_y_displacement(3 downto 0)) & 
                                                                                                                (tilexoff - sprite1_x_displacement(3 downto 0))));
                 else current_sprite_pixel1 <= X"00"; end if;
-                if xctr(10 downto 0) >= sprite2_x_displacement(10 downto 0) and xctr(10 downto 0) < sprite2_x_displacement(10 downto 0) + 16 and 
-                   yctr(10 downto 0) >= sprite2_y_displacement(10 downto 0) and yctr(10 downto 0) < sprite2_y_displacement(10 downto 0) + 16 then
+                if xctr(11 downto 0) >= sprite2_x_displacement(15 downto 0) and xctr(11 downto 0) < sprite2_x_displacement(15 downto 0) + 16 and 
+                   yctr(11 downto 0) >= sprite2_y_displacement(15 downto 0) and yctr(11 downto 0) < sprite2_y_displacement(15 downto 0) + 16 then
                     current_sprite_pixel2 <= sprite_pixel_mem(conv_integer(rVR(24)(7 downto 4)))(conv_integer((tileyoff - sprite2_y_displacement(3 downto 0)) & 
                                                                                                               (tilexoff - sprite2_x_displacement(3 downto 0))));
                 else current_sprite_pixel2 <= X"00"; end if;
-                if xctr(10 downto 0) >= sprite3_x_displacement(10 downto 0) and xctr(10 downto 0) < sprite3_x_displacement(10 downto 0) + 16 and 
-                   yctr(10 downto 0) >= sprite3_y_displacement(10 downto 0) and yctr(10 downto 0) < sprite3_y_displacement(10 downto 0) + 16 then
+                if xctr(11 downto 0) >= sprite3_x_displacement(15 downto 0) and xctr(11 downto 0) < sprite3_x_displacement(15 downto 0) + 16 and 
+                   yctr(11 downto 0) >= sprite3_y_displacement(15 downto 0) and yctr(11 downto 0) < sprite3_y_displacement(15 downto 0) + 16 then
                     current_sprite_pixel3 <= sprite_pixel_mem(conv_integer(rVR(24)(3 downto 0)))(conv_integer((tileyoff - sprite3_y_displacement(3 downto 0)) & 
                                                                                                               (tilexoff - sprite3_x_displacement(3 downto 0))));
                 else current_sprite_pixel3 <= X"00"; end if;
-                if xctr(10 downto 0) >= sprite4_x_displacement(10 downto 0) and xctr(10 downto 0) < sprite4_x_displacement(10 downto 0) + 16 and 
-                   yctr(10 downto 0) >= sprite4_y_displacement(10 downto 0) and yctr(10 downto 0) < sprite4_y_displacement(10 downto 0) + 16 then
+                if xctr(11 downto 0) >= sprite4_x_displacement(15 downto 0) and xctr(11 downto 0) < sprite4_x_displacement(15 downto 0) + 16 and 
+                   yctr(11 downto 0) >= sprite4_y_displacement(15 downto 0) and yctr(11 downto 0) < sprite4_y_displacement(15 downto 0) + 16 then
                     current_sprite_pixel4 <= sprite_pixel_mem(conv_integer(rVR(25)(15 downto 12)))(conv_integer((tileyoff - sprite4_y_displacement(3 downto 0)) & 
                                                                                                                 (tilexoff - sprite4_x_displacement(3 downto 0))));
                 else current_sprite_pixel4 <= X"00"; end if;
-                if xctr(10 downto 0) >= sprite5_x_displacement(10 downto 0) and xctr(10 downto 0) < sprite5_x_displacement(10 downto 0) + 16 and 
-                   yctr(10 downto 0) >= sprite5_y_displacement(10 downto 0) and yctr(10 downto 0) < sprite5_y_displacement(10 downto 0) + 16 then
+                if xctr(11 downto 0) >= sprite5_x_displacement(15 downto 0) and xctr(11 downto 0) < sprite5_x_displacement(15 downto 0) + 16 and 
+                   yctr(11 downto 0) >= sprite5_y_displacement(15 downto 0) and yctr(11 downto 0) < sprite5_y_displacement(15 downto 0) + 16 then
                     current_sprite_pixel5 <= sprite_pixel_mem(conv_integer(rVR(25)(11 downto 8)))(conv_integer((tileyoff - sprite5_y_displacement(3 downto 0)) & 
                                                                                                                (tilexoff - sprite5_x_displacement(3 downto 0))));
                 else current_sprite_pixel5 <= X"00"; end if;
-                if xctr(10 downto 0) >= sprite6_x_displacement(10 downto 0) and xctr(10 downto 0) < sprite6_x_displacement(10 downto 0) + 16 and 
-                   yctr(10 downto 0) >= sprite6_y_displacement(10 downto 0) and yctr(10 downto 0) < sprite6_y_displacement(10 downto 0) + 16 then
+                if xctr(11 downto 0) >= sprite6_x_displacement(15 downto 0) and xctr(11 downto 0) < sprite6_x_displacement(15 downto 0) + 16 and 
+                   yctr(11 downto 0) >= sprite6_y_displacement(15 downto 0) and yctr(11 downto 0) < sprite6_y_displacement(15 downto 0) + 16 then
                     current_sprite_pixel6 <= sprite_pixel_mem(conv_integer(rVR(25)(11 downto 4)))(conv_integer((tileyoff - sprite6_y_displacement(3 downto 0)) & 
                                                                                                                (tilexoff - sprite6_x_displacement(3 downto 0))));
                 else current_sprite_pixel6 <= X"00"; end if;
-                if xctr(10 downto 0) >= sprite7_x_displacement(10 downto 0) and xctr(10 downto 0) < sprite7_x_displacement(10 downto 0) + 16 and 
-                   yctr(10 downto 0) >= sprite7_y_displacement(10 downto 0) and yctr(10 downto 0) < sprite7_y_displacement(10 downto 0) + 16 then
+                if xctr(11 downto 0) >= sprite7_x_displacement(15 downto 0) and xctr(11 downto 0) < sprite7_x_displacement(15 downto 0) + 16 and 
+                   yctr(11 downto 0) >= sprite7_y_displacement(15 downto 0) and yctr(11 downto 0) < sprite7_y_displacement(15 downto 0) + 16 then
                     current_sprite_pixel7 <= sprite_pixel_mem(conv_integer(rVR(25)(3 downto 0)))(conv_integer((tileyoff - sprite7_y_displacement(3 downto 0)) & 
                                                                                                               (tilexoff - sprite7_x_displacement(3 downto 0))));
                 else current_sprite_pixel7 <= X"00"; end if;
 
-            elsif pixel = "11" then
-                if current_sprite_pixel0(7) = '1' then
-                    video <= current_sprite_pixel0;
-                elsif current_sprite_pixel1(7) = '1' then
-                    video <= current_sprite_pixel1;
-                elsif current_sprite_pixel2(7) = '1' then
-                    video <= current_sprite_pixel2;
-                elsif current_sprite_pixel3(7) = '1' then
-                    video <= current_sprite_pixel3;
-                elsif current_sprite_pixel4(7) = '1' then
-                    video <= current_sprite_pixel4;
-                elsif current_sprite_pixel5(7) = '1' then
-                    video <= current_sprite_pixel5;
-                elsif current_sprite_pixel6(7) = '1' then
-                    video <= current_sprite_pixel6;
-                elsif current_sprite_pixel7(7) = '1' then
-                    video <= current_sprite_pixel7;
-                elsif current_pixel0(7) = '1' then
-                    video <= current_pixel0;
-                elsif current_pixel1(7) = '1' then
-                    video <= current_pixel1;
-                elsif current_pixel2(7) = '1' then
-                    video <= current_pixel2;
-                else
-                    video <= current_pixel3;
+            elsif pixel = "11" then --val av pixel
+                if    sprite_0_layer = "00" and current_sprite_pixel0(7) = '1' then video <= current_sprite_pixel0; 
+                elsif sprite_1_layer = "00" and current_sprite_pixel1(7) = '1' then video <= current_sprite_pixel1; 
+                elsif sprite_2_layer = "00" and current_sprite_pixel2(7) = '1' then video <= current_sprite_pixel2; 
+                elsif sprite_3_layer = "00" and current_sprite_pixel3(7) = '1' then video <= current_sprite_pixel3; 
+                elsif sprite_4_layer = "00" and current_sprite_pixel4(7) = '1' then video <= current_sprite_pixel4; 
+                elsif sprite_5_layer = "00" and current_sprite_pixel5(7) = '1' then video <= current_sprite_pixel5; 
+                elsif sprite_6_layer = "00" and current_sprite_pixel6(7) = '1' then video <= current_sprite_pixel6; 
+                elsif sprite_7_layer = "00" and current_sprite_pixel7(7) = '1' then video <= current_sprite_pixel7; 
+                elsif current_pixel0(7) = '1' then video <= current_pixel0;
+                elsif sprite_0_layer = "01" and current_sprite_pixel0(7) = '1' then video <= current_sprite_pixel0; 
+                elsif sprite_1_layer = "01" and current_sprite_pixel1(7) = '1' then video <= current_sprite_pixel1; 
+                elsif sprite_2_layer = "01" and current_sprite_pixel2(7) = '1' then video <= current_sprite_pixel2; 
+                elsif sprite_3_layer = "01" and current_sprite_pixel3(7) = '1' then video <= current_sprite_pixel3; 
+                elsif sprite_4_layer = "01" and current_sprite_pixel4(7) = '1' then video <= current_sprite_pixel4; 
+                elsif sprite_5_layer = "01" and current_sprite_pixel5(7) = '1' then video <= current_sprite_pixel5; 
+                elsif sprite_6_layer = "01" and current_sprite_pixel6(7) = '1' then video <= current_sprite_pixel6; 
+                elsif sprite_7_layer = "01" and current_sprite_pixel7(7) = '1' then video <= current_sprite_pixel7; 
+                elsif current_pixel1(7) = '1' then video <= current_pixel1;
+                elsif sprite_0_layer = "10" and current_sprite_pixel0(7) = '1' then video <= current_sprite_pixel0; 
+                elsif sprite_1_layer = "10" and current_sprite_pixel1(7) = '1' then video <= current_sprite_pixel1; 
+                elsif sprite_2_layer = "10" and current_sprite_pixel2(7) = '1' then video <= current_sprite_pixel2; 
+                elsif sprite_3_layer = "10" and current_sprite_pixel3(7) = '1' then video <= current_sprite_pixel3; 
+                elsif sprite_4_layer = "10" and current_sprite_pixel4(7) = '1' then video <= current_sprite_pixel4; 
+                elsif sprite_5_layer = "10" and current_sprite_pixel5(7) = '1' then video <= current_sprite_pixel5; 
+                elsif sprite_6_layer = "10" and current_sprite_pixel6(7) = '1' then video <= current_sprite_pixel6; 
+                elsif sprite_7_layer = "10" and current_sprite_pixel7(7) = '1' then video <= current_sprite_pixel7; 
+                elsif current_pixel2(7) = '1' then video <= current_pixel2;
+                elsif sprite_0_layer = "11" and current_sprite_pixel0(7) = '1' then video <= current_sprite_pixel0; 
+                elsif sprite_1_layer = "11" and current_sprite_pixel1(7) = '1' then video <= current_sprite_pixel1; 
+                elsif sprite_2_layer = "11" and current_sprite_pixel2(7) = '1' then video <= current_sprite_pixel2; 
+                elsif sprite_3_layer = "11" and current_sprite_pixel3(7) = '1' then video <= current_sprite_pixel3; 
+                elsif sprite_4_layer = "11" and current_sprite_pixel4(7) = '1' then video <= current_sprite_pixel4; 
+                elsif sprite_5_layer = "11" and current_sprite_pixel5(7) = '1' then video <= current_sprite_pixel5; 
+                elsif sprite_6_layer = "11" and current_sprite_pixel6(7) = '1' then video <= current_sprite_pixel6; 
+                elsif sprite_7_layer = "11" and current_sprite_pixel7(7) = '1' then video <= current_sprite_pixel7; 
+                else video <= current_pixel3;
                 end if;
             end if;
         else
