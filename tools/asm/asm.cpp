@@ -13,7 +13,7 @@
 using namespace std;
 
 #define MAX_WORDS_PER_LINE 10
-#define MEMORY_LENGTH 0xFF
+#define MEMORY_LENGTH 0xFFF
 
 int max_addr = 0;
 

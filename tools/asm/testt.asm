@@ -21,7 +21,7 @@
 
 :x_vel_dir dat 0 				;; 0 if left, 1 if right
 :x_vel dat 0
-:x_vel_dir dat 0 				;; 0 if up, 1 if down
+:y_vel_dir dat 0 				;; 0 if up, 1 if down
 :y_vel dat 0
 
 :x_acc_dir dat 0 				;; 0 if left, 1 if right
@@ -33,8 +33,10 @@
 	SSP 0x7FF
 :loop
 	JSR input
-	JSR handle_velocity
-	JSR handle_movement
+	JSR handle_velocity_x
+	JSR handle_velocity_y
+	JSR handle_movement_x
+	JSR handle_movement_y
 	JSR render_char
 	MOVE GR2, [x_vel]
 	MOVE GR3, [x_acc]
@@ -48,15 +50,15 @@
 	PUSH GR1
 
 :check_up
-	;;MOVE GR0, [0x8000]		;; up
-	;;CMP GR0, 1
-	;;BNE check_right			;; check next if button not down
-;;
-;;
-	;;MOVE GR1, [y_vel]
-	;;CMP GR1, 
-	;;MOVE GR1, 24
-	;;STORE GR1, y_vel
+	MOVE GR0, [0x8000]		;; up
+	CMP GR0, 1
+	BNE check_x				;; check next if button not down
+	MOVE GR0, 8
+	STORE GR0, y_vel
+	MOVE GR0, 0
+	STORE GR0, y_vel_dir
+
+:check_x
 
 	MOVE GR0, [0x8001]
 	MOVE GR1, [0x8003]
@@ -79,9 +81,19 @@
 	BRA done_directions
 
 :no_x_input
-	MOVE GR1, 0 				;; acceleration = 0
+	MOVE GR1, [x_vel]
+	CMP GR1, 0
+	BEQ stop_acc_x
+	INV GR1, [x_vel_dir]		;; invert direction
+	ADD GR1, 1
+	STORE GR1, x_acc_dir
+	MOVE GR1, 1 				;; acceleration = 1
 	STORE GR1, x_acc
 	BRA done_directions
+
+:stop_acc_x
+	MOVE GR1, 0
+	STORE GR1, x_acc
 
 :done_directions
 	POP GR1
@@ -90,7 +102,7 @@
 
 
 ;; Handle all the Velocity thingies
-:handle_velocity
+:handle_velocity_x
 	PUSH GR0
 	PUSH GR1
 
@@ -132,7 +144,52 @@
 	POP GR0
 	RTS
 
-:handle_movement
+:handle_velocity_y
+	PUSH GR0
+	PUSH GR1
+
+	MOVE GR0, [y_vel_dir]
+	CMP GR0, [y_acc_dir]
+	BEQ y_dir_same
+	BNE y_dir_not_same
+
+:y_dir_same
+	MOVE GR0, [y_vel]
+	ADD GR0, [y_acc]
+	STORE GR0, y_vel
+	BRA y_vel_clamp
+
+:y_dir_not_same
+	MOVE GR0, [y_vel]
+	SUB GR0, [y_acc]
+	BMI y_vel_negative				;; jump to inverter
+	STORE GR0, y_vel
+	BRA y_vel_clamp
+
+:y_vel_negative
+	INV GR0, [y_vel]
+	STORE GR0, y_vel
+	INV GR0, [y_vel_dir]
+	ADD GR0, 1
+	STORE GR0, y_vel_dir
+
+:y_vel_clamp
+	MOVE GR0, [y_vel_dir]
+	CMP GR0, 1
+	BNE y_vel_done				;; if jumping dont clamp
+	MOVE GR0, [y_vel]
+	CMP GR0, 1					;; max speed
+	BMI y_vel_done
+	MOVE GR0, 1					;; max speed
+	STORE GR0, y_vel
+
+:y_vel_done
+
+	POP GR1
+	POP GR0
+	RTS
+
+:handle_movement_x
 	PUSH GR0
 	PUSH GR1
 	PUSH GR8
@@ -150,6 +207,30 @@
 	SUB GR1, GR0					;; POS - Velocity
 :x_handle_movement_done
 	STORE GR1, x_pos
+
+	POP GR8
+	POP GR1
+	POP GR0
+	RTS
+
+:handle_movement_y
+	PUSH GR0
+	PUSH GR1
+	PUSH GR8
+
+	MOVE GR0, [y_vel]
+	MOVE GR1, [y_pos]
+	;;LSR GR0, 4
+	MOVE GR8, [y_vel_dir]
+	CMP GR8, 1						;; handle movement right?
+	BNE y_handle_movement_left
+:y_handle_movement_right
+	ADD GR1, GR0					;; POS + Velocity
+	BRA y_handle_movement_done
+:y_handle_movement_left
+	SUB GR1, GR0					;; POS - Velocity
+:y_handle_movement_done
+	STORE GR1, y_pos
 
 	POP GR8
 	POP GR1
