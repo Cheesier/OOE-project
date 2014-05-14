@@ -42,7 +42,7 @@ ARCHITECTURE behavior OF main_tb IS
   SIGNAL ledval : STD_LOGIC_VECTOR (7 downto 0) := X"00";
 
   SIGNAL btn_up, btn_down, btn_left : STD_LOGIC := '0';
-  SIGNAL btn_right : STD_LOGIC := '1';
+  SIGNAL btn_right : STD_LOGIC := '0';
  
   SIGNAL tb_running : boolean := true;
 BEGIN

@@ -18,7 +18,7 @@ using namespace std;
 int max_addr = 0;
 
 bool debug = false;
-int numberToDisplay = 0x100;
+int numberToDisplay = 0x200;
 
 string *currentLine;
 int currentLineNum;
@@ -251,7 +251,10 @@ void fillMemory(vector<string> & ret, int words) {
                         immediateValue = getAdr(ret[2]);
                     }
                     if (words == 2) {
-                        immediateValue = getAdr(ret[1]);
+                        if (isGR(ret[1]))
+                            gra = getRegisterNumber(ret[1]);
+                        else
+                            immediateValue = getAdr(ret[1]);
                     }
                     break;
                 case MODE_INDIRECT:

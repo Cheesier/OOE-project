@@ -55,9 +55,12 @@ void memoryDump() {
     id = 0;
     int row;
     int col;
+    bool found_invalid = false;
     for (row = 0; row < MAX_HEIGHT; row++) {
+      if (found_invalid)
+        break;
       for (col = 0; col-16 < MAX_WIDTH; col += 16) {
-        outFile << dec << addr << "=> (";
+        outFile << dec << addr << "=> ";
         outFile << "X\"";
         outFile << hex << setfill('0') << setw(4);
 
@@ -70,9 +73,13 @@ void memoryDump() {
             val = val << 1;
           if (col+num < 100 && mapArray[l][row*100+col+num] == 2)
             val += 1;
+          /*else if (mapArray[l][row*100+col+num] > 2) {
+            found_invalid = true;
+            break;
+          }*/
         }
 
-        outFile << val << "), ";
+        outFile << val << "\",";
 
       }
     }
