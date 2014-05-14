@@ -44,12 +44,12 @@
 :boot
 	SSP 0x7FF
 :loop
-	;JSR input
-	;JSR handle_velocity_x
-	;JSR handle_velocity_y
-	;JSR handle_movement_x
-	;JSR handle_movement_y
-	JSR simple_input
+	JSR input
+	JSR handle_velocity_x
+	JSR handle_velocity_y
+	JSR handle_movement_x
+	JSR handle_movement_y
+	;JSR simple_input
 	JSR find_collision
 	JSR handle_collision
 	JSR render_char
@@ -379,19 +379,19 @@
 	PUSH GR2
 	
 	MOVE GR0, [top_left_collide]
-	CMP GR0, 0
+	CMP GR0, 1
 	BEQ check_biggest_vel
 
 	MOVE GR0, [top_right_collide]
-	CMP GR0, 0
+	CMP GR0, 1
 	BEQ check_biggest_vel
 
 	MOVE GR0, [bottom_left_collide]
-	CMP GR0, 0
+	CMP GR0, 1
 	BEQ check_biggest_vel
 
 	MOVE GR0, [bottom_right_collide]
-	CMP GR0, 0
+	CMP GR0, 1
 	BEQ check_biggest_vel
 	BRA done_handle_collision
 
@@ -399,26 +399,28 @@
 	MOVE GR0, [old_y_vel]
 	CMP GR0, [old_x_vel]
 	BMI x_collision_handler
-	BRA y_collision_handler
+	BPL y_collision_handler
 	
 :x_collision_handler
 	MOVE GR0, 0
-	STORE GR0, x_vel
+	STORE GR0, x_vel 				; null the velocity
 	MOVE GR1, [x_pos]
-	AND GR1, 0xF
-	MOVE GR2, [x_pos]
-	MOVE GR0, [old_x_vel_dir]
-	CMP GR0, 1
+	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
+	MOVE GR2, [x_pos] 				; GR2 = x_pos
+	MOVE GR0, [old_x_vel_dir] 		; GR0 = old_x_vel_dir
+	CMP GR0, 1 						; direction right?
 	BEQ going_right
 :going_left
-	ADD GR2, GR1
+	MOVE GR3, 16 					; GR3 = distance to tile border
+	SUB GR3, GR1
+	ADD GR2, GR3					; X_pos + distance to tile border
 	BRA moved_x_dir
 :going_right
-	SUB GR2, GR1
+	SUB GR2, GR1 					; X_pos - distance to tile border
 :moved_x_dir
 	STORE GR2, x_pos
 	
-	MOVE GR0, [old_y_vel]
+	MOVE GR0, [old_y_vel] 			; GR0 = old_y_vel
 	CMP GR0, 0
 	BEQ done_handle_collision
 	
@@ -436,7 +438,9 @@
 	CMP GR0, 1		; check direction
 	BEQ going_down
 :going_up
-	ADD GR2, GR1		; y_pos + tile offset
+	MOVE GR3, 16
+	SUB GR3, GR1
+	ADD GR2, GR3		; y_pos + tile offset
 	BRA moved_y_dir
 :going_down
 	SUB GR2, GR1		; y_pos - tile offset

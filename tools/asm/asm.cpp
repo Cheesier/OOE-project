@@ -251,8 +251,10 @@ void fillMemory(vector<string> & ret, int words) {
                         immediateValue = getAdr(ret[2]);
                     }
                     if (words == 2) {
-                        if (isGR(ret[1]))
+                        if (isGR(ret[1])) {
                             gra = getRegisterNumber(ret[1]);
+                            //mode = MODE_REGISTER;
+                        }
                         else
                             immediateValue = getAdr(ret[1]);
                     }
