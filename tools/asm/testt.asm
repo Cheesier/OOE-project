@@ -1,9 +1,10 @@
 :coldboot
 	MOVE GR0, 0
 	MOVE GR1, 0xD0
+	MOVE GR4, 0xF0
 	MOVE GR2, 1
 	MOVE GR3, 2
-	STORE GR1, x_pos
+	STORE GR4, x_pos
 	STORE GR1, y_pos
 	STORE GR0, z_pos
 	STORE GR0, x_vel_dir
@@ -14,6 +15,7 @@
 	STORE GR0, x_acc
 	STORE GR2, y_acc_dir		;; gravity direction down 
 	STORE GR3, y_acc 			;; gravity = 2
+	JSR find_collision;
 	BRA boot
 
 :x_pos dat 0
@@ -25,9 +27,9 @@
 :y_vel_dir dat 0 				;; 0 if up, 1 if down
 :y_vel dat 0
 
-:old_x_vel_dir dat 0 				;; 0 if left, 1 if right
+:old_x_vel_dir dat 0 			;; 0 if left, 1 if right
 :old_x_vel dat 0
-:old_y_vel_dir dat 0 				;; 0 if up, 1 if down
+:old_y_vel_dir dat 0 			;; 0 if up, 1 if down
 :old_y_vel dat 0
 
 :x_acc_dir dat 0 				;; 0 if left, 1 if right
@@ -44,12 +46,12 @@
 :boot
 	SSP 0x7FF
 :loop
-	JSR input
-	JSR handle_velocity_x
-	JSR handle_velocity_y
-	JSR handle_movement_x
-	JSR handle_movement_y
-	;JSR simple_input
+	;JSR input
+	;JSR handle_velocity_x
+	;JSR handle_velocity_y
+	;JSR handle_movement_x
+	;JSR handle_movement_y
+	JSR simple_input
 	JSR find_collision
 	JSR handle_collision
 	JSR render_char
@@ -380,78 +382,176 @@
 	
 	MOVE GR0, [top_left_collide]
 	CMP GR0, 1
-	BEQ check_biggest_vel
+	BEQ TL_collides
 
 	MOVE GR0, [top_right_collide]
 	CMP GR0, 1
-	BEQ check_biggest_vel
+	BEQ TR_collides
 
 	MOVE GR0, [bottom_left_collide]
 	CMP GR0, 1
-	BEQ check_biggest_vel
+	BEQ BL_collides
 
 	MOVE GR0, [bottom_right_collide]
 	CMP GR0, 1
-	BEQ check_biggest_vel
+	BEQ bottom_right_corner_collides
 	BRA done_handle_collision
 
-:check_biggest_vel
-	MOVE GR0, [old_y_vel]
-	CMP GR0, [old_x_vel]
-	BMI x_collision_handler
-	BPL y_collision_handler
-	
-:x_collision_handler
-	MOVE GR0, 0
-	STORE GR0, x_vel 				; null the velocity
+:TL_collides
+	MOVE GR0, [top_right_collide]
+	CMP GR0, 1
+	BEQ roof_collides
+	MOVE GR0, [bottom_left_collide]
+	CMP GR0, 1
+	BEQ left_wall_collides
+	BRA top_left_corner_collides
+
+:TR_collides
+	MOVE GR0, [bottom_right_collide]
+	CMP GR0, 1
+	BEQ right_wall_collides
+	BRA top_right_corner_collides
+
+:BL_collides
+	MOVE GR0, [bottom_right_collide]
+	CMP GR0, 1
+	BEQ floor_collides
+	BRA bottom_left_corner_collides
+
+:roof_collides
+	MOVE GR0, [bottom_left_collide]
+	CMP GR0, 1
+	BEQ TL_TR_BL_collides
+	MOVE GR0, [bottom_right_collide]
+	CMP GR0, 1
+	BEQ TL_TR_BR_collides			; Else, continue
+
+	MOVE GR1, [y_pos]
+	AND GR1, 0xF 					; GR1 = y & 0xF, distance to tile border
+	MOVE GR2, [y_pos] 				; GR2 = y_pos
+	MOVE GR3, 16
+	SUB GR3, GR1
+	ADD GR2, GR3					; y_pos + tile offset
+	STORE GR2, [y_pos]
+	BRA done_handle_collision
+
+:left_wall_collides
+	MOVE GR0, [bottom_right_collide]
+	CMP GR0, 1
+	BEQ TL_BL_BR_collides			; Else, continue
+
 	MOVE GR1, [x_pos]
 	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
 	MOVE GR2, [x_pos] 				; GR2 = x_pos
-	MOVE GR0, [old_x_vel_dir] 		; GR0 = old_x_vel_dir
-	CMP GR0, 1 						; direction right?
-	BEQ going_right
-:going_left
 	MOVE GR3, 16 					; GR3 = distance to tile border
 	SUB GR3, GR1
 	ADD GR2, GR3					; X_pos + distance to tile border
-	BRA moved_x_dir
-:going_right
-	SUB GR2, GR1 					; X_pos - distance to tile border
-:moved_x_dir
-	STORE GR2, x_pos
-	
-	MOVE GR0, [old_y_vel] 			; GR0 = old_y_vel
-	CMP GR0, 0
-	BEQ done_handle_collision
-	
-	MOVE GR0, 0
-	STORE GR0, old_x_vel
-	
-	
-:y_collision_handler
-	MOVE GR0, 0
-	STORE GR0, y_vel
+	STORE GR2, [x_pos]
+	BRA done_handle_collision
+
+:right_wall_collides
+	MOVE GR0, [bottom_left_collide]
+	CMP GR0, 1
+	BEQ TR_BL_BR_collides			; Else, continue
+
+	MOVE GR1, [x_pos]
+	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
+	MOVE GR2, [x_pos] 				; GR2 = x_pos
+	SUB GR2, GR1					; X_pos - distance to tile border
+	STORE GR2, [x_pos]
+	BRA done_handle_collision
+
+:floor_collides
 	MOVE GR1, [y_pos]
-	AND GR1, 0xF
-	MOVE GR2, [y_pos]
-	MOVE GR0, [old_y_vel_dir]
-	CMP GR0, 1		; check direction
-	BEQ going_down
-:going_up
+	AND GR1, 0xF 					; GR1 = Y & 0xF, distance to tile border
+	MOVE GR2, [y_pos] 				; GR2 = y_pos
+	SUB GR2, GR1					; y_pos - distance to tile border
+	STORE GR2, [y_pos]
+	BRA done_handle_collision
+
+
+;;; SINGLE AND TRIPPLE CASES
+:TL_TR_BL_collides
+	;; roof
+	MOVE GR1, [y_pos]
+	AND GR1, 0xF 					; GR1 = y & 0xF, distance to tile border
+	MOVE GR2, [y_pos] 				; GR2 = y_pos
 	MOVE GR3, 16
 	SUB GR3, GR1
-	ADD GR2, GR3		; y_pos + tile offset
-	BRA moved_y_dir
-:going_down
-	SUB GR2, GR1		; y_pos - tile offset
-:moved_y_dir
-	STORE GR2, y_pos	; save new y_pos
-	MOVE GR0, 0
-	STORE GR0, old_y_vel	; show that y direction is now correct
+	ADD GR2, GR3					; y_pos + tile offset
+	STORE GR2, [y_pos]
+
+	;; left-wall
+	MOVE GR1, [x_pos]
+	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
+	MOVE GR2, [x_pos] 				; GR2 = x_pos
+	MOVE GR3, 16 					; GR3 = distance to tile border
+	SUB GR3, GR1
+	ADD GR2, GR3					; X_pos + distance to tile border
+	STORE GR2, [x_pos]
+	BRA done_handle_collision
+
 	
-	MOVE GR0, [old_x_vel]
-	CMP GR0, 0		; check if x direction is still wrong
-	BNE x_collision_handler
+:TL_TR_BR_collides
+	;; roof
+	MOVE GR1, [y_pos]
+	AND GR1, 0xF 					; GR1 = y & 0xF, distance to tile border
+	MOVE GR2, [y_pos] 				; GR2 = y_pos
+	MOVE GR3, 16
+	SUB GR3, GR1
+	ADD GR2, GR3					; y_pos + tile offset
+	STORE GR2, [y_pos]
+
+	;; right-wall
+	MOVE GR1, [x_pos]
+	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
+	MOVE GR2, [x_pos] 				; GR2 = x_pos
+	SUB GR2, GR1					; X_pos - distance to tile border
+	STORE GR2, [x_pos]
+	BRA done_handle_collision
+
+
+:TL_BL_BR_collides
+	;; left-wall
+	MOVE GR1, [x_pos]
+	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
+	MOVE GR2, [x_pos] 				; GR2 = x_pos
+	MOVE GR3, 16 					; GR3 = distance to tile border
+	SUB GR3, GR1
+	ADD GR2, GR3					; X_pos + distance to tile border
+	STORE GR2, [x_pos]
+
+	;; floor
+	MOVE GR1, [y_pos]
+	AND GR1, 0xF 					; GR1 = Y & 0xF, distance to tile border
+	MOVE GR2, [y_pos] 				; GR2 = y_pos
+	SUB GR2, GR1					; y_pos - distance to tile border
+	STORE GR2, [y_pos]
+	BRA done_handle_collision
+
+
+:TR_BL_BR_COLLIDES
+	;; right-wall
+	MOVE GR1, [x_pos]
+	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
+	MOVE GR2, [x_pos] 				; GR2 = x_pos
+	SUB GR2, GR1					; X_pos - distance to tile border
+	STORE GR2, [x_pos]
+
+	;; floor
+	MOVE GR1, [y_pos]
+	AND GR1, 0xF 					; GR1 = Y & 0xF, distance to tile border
+	MOVE GR2, [y_pos] 				; GR2 = y_pos
+	SUB GR2, GR1					; y_pos - distance to tile border
+	STORE GR2, [y_pos]
+	BRA done_handle_collision
+
+:top_left_corner_collides
+:top_right_corner_collides
+:bottom_left_corner_collides
+:bottom_right_corner_collides
+
+	BRA done_handle_collision
 	
 :done_handle_collision
 	POP GR2
