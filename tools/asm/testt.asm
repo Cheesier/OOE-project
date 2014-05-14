@@ -40,10 +40,16 @@
 :bottom_left_collide dat 0
 :bottom_right_collide dat 0
 
+:layer0_disp dat 0
+:layer1_disp dat 0
+:layer2_disp dat 0
+:layer3_disp dat 0
+
 
 :boot
 	SSP 0x7FF
 :loop
+	JSR time
 	JSR input
 	JSR handle_velocity_x
 	JSR handle_velocity_y
@@ -69,6 +75,28 @@
 ;;; END DEBUG
 	WVS
 	BRA loop
+
+
+;;;
+;;; Scroll time
+;;;
+:time
+	PUSH GR0
+	MOVE GR0, [layer2_disp]
+	SUB GR0, 1
+	CMP GR0, -1600
+	BNE layer2_done
+	MOVE GR0, 640
+:layer2_done
+	STORE GR0, layer2_disp
+
+	;;MOVE GR0, [x_pos]
+	;;LSR GR0, 3
+	;;INV GR0, GR0
+	;MOVE GR0, [layer3_disp]
+
+	POP GR0
+	RTS
 
 
 ;;;
@@ -174,6 +202,13 @@
 	STORE GR0, x_vel
 
 :x_vel_done
+	MOVE GR0, [x_vel]
+	CMP 10
+	BMI x_vel_all_done
+	MOVE GR0, 0
+	STORE GR0, x_vel
+:x_vel_all_done
+
 
 	POP GR1
 	POP GR0
@@ -469,6 +504,17 @@
 	STORE GR0, 0x9000
 	MOVE GR0, [y_pos]
 	STORE GR0, 0x9001
+
+	MOVE GR0, 2
+	STORE GR0, 0x9012
+	MOVE GR0, -3
+	STORE GR0, 0x9013
+
+	MOVE GR0, [layer2_disp]
+	STORE GR0, 0x9014
+
+	;MOVE GR0, [layer3_disp]
+	;STORE GR0, 0x9016
 
 	POP GR0
 	RTS
