@@ -46,12 +46,12 @@
 :boot
 	SSP 0x7FF
 :loop
-	;JSR input
-	;JSR handle_velocity_x
-	;JSR handle_velocity_y
-	;JSR handle_movement_x
-	;JSR handle_movement_y
-	JSR simple_input
+	JSR input
+	JSR handle_velocity_x
+	JSR handle_velocity_y
+	JSR handle_movement_x
+	JSR handle_movement_y
+	;JSR simple_input
 	JSR find_collision
 	JSR handle_collision
 	JSR render_char
@@ -138,10 +138,6 @@
 :handle_velocity_x
 	PUSH GR0
 	PUSH GR1
-	MOVE GR0, [x_vel_dir]
-	STORE GR0, old_x_vel_dir
-	MOVE GR0, [x_vel]
-	STORE GR0, old_x_vel
 
 	MOVE GR0, [x_vel_dir]
 	CMP GR0, [x_acc_dir]
@@ -185,11 +181,6 @@
 ;;; HANDLE VELOCITY Y
 ;;; 
 :handle_velocity_y
-	MOVE GR0, [y_vel_dir]
-	STORE GR0, old_y_vel_dir
-	MOVE GR0, [y_vel]
-	STORE GR0, old_y_vel
-	
 	PUSH GR0
 	PUSH GR1
 
@@ -432,7 +423,7 @@
 	MOVE GR3, 16
 	SUB GR3, GR1
 	ADD GR2, GR3					; y_pos + tile offset
-	STORE GR2, [y_pos]
+	STORE GR2, y_pos
 	BRA done_handle_collision
 
 :left_wall_collides
@@ -446,7 +437,7 @@
 	MOVE GR3, 16 					; GR3 = distance to tile border
 	SUB GR3, GR1
 	ADD GR2, GR3					; X_pos + distance to tile border
-	STORE GR2, [x_pos]
+	STORE GR2, x_pos
 	BRA done_handle_collision
 
 :right_wall_collides
@@ -458,7 +449,7 @@
 	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
 	MOVE GR2, [x_pos] 				; GR2 = x_pos
 	SUB GR2, GR1					; X_pos - distance to tile border
-	STORE GR2, [x_pos]
+	STORE GR2, x_pos
 	BRA done_handle_collision
 
 :floor_collides
@@ -466,7 +457,7 @@
 	AND GR1, 0xF 					; GR1 = Y & 0xF, distance to tile border
 	MOVE GR2, [y_pos] 				; GR2 = y_pos
 	SUB GR2, GR1					; y_pos - distance to tile border
-	STORE GR2, [y_pos]
+	STORE GR2, y_pos
 	BRA done_handle_collision
 
 
@@ -479,7 +470,7 @@
 	MOVE GR3, 16
 	SUB GR3, GR1
 	ADD GR2, GR3					; y_pos + tile offset
-	STORE GR2, [y_pos]
+	STORE GR2, y_pos
 
 	;; left-wall
 	MOVE GR1, [x_pos]
@@ -488,7 +479,7 @@
 	MOVE GR3, 16 					; GR3 = distance to tile border
 	SUB GR3, GR1
 	ADD GR2, GR3					; X_pos + distance to tile border
-	STORE GR2, [x_pos]
+	STORE GR2, x_pos
 	BRA done_handle_collision
 
 	
@@ -500,14 +491,14 @@
 	MOVE GR3, 16
 	SUB GR3, GR1
 	ADD GR2, GR3					; y_pos + tile offset
-	STORE GR2, [y_pos]
+	STORE GR2, y_pos
 
 	;; right-wall
 	MOVE GR1, [x_pos]
 	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
 	MOVE GR2, [x_pos] 				; GR2 = x_pos
 	SUB GR2, GR1					; X_pos - distance to tile border
-	STORE GR2, [x_pos]
+	STORE GR2, x_pos
 	BRA done_handle_collision
 
 
@@ -519,14 +510,14 @@
 	MOVE GR3, 16 					; GR3 = distance to tile border
 	SUB GR3, GR1
 	ADD GR2, GR3					; X_pos + distance to tile border
-	STORE GR2, [x_pos]
+	STORE GR2, x_pos
 
 	;; floor
 	MOVE GR1, [y_pos]
 	AND GR1, 0xF 					; GR1 = Y & 0xF, distance to tile border
 	MOVE GR2, [y_pos] 				; GR2 = y_pos
 	SUB GR2, GR1					; y_pos - distance to tile border
-	STORE GR2, [y_pos]
+	STORE GR2, y_pos
 	BRA done_handle_collision
 
 
@@ -536,20 +527,40 @@
 	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
 	MOVE GR2, [x_pos] 				; GR2 = x_pos
 	SUB GR2, GR1					; X_pos - distance to tile border
-	STORE GR2, [x_pos]
+	STORE GR2, x_pos
 
 	;; floor
 	MOVE GR1, [y_pos]
 	AND GR1, 0xF 					; GR1 = Y & 0xF, distance to tile border
 	MOVE GR2, [y_pos] 				; GR2 = y_pos
 	SUB GR2, GR1					; y_pos - distance to tile border
-	STORE GR2, [y_pos]
+	STORE GR2, y_pos
 	BRA done_handle_collision
 
 :top_left_corner_collides
+	MOVE GR1, [y_pos]
+	AND GR1, 0xF 					; GR1 = y & 0xF, distance to tile border
+	MOVE GR2, [y_pos] 				; GR2 = y_pos
+	MOVE GR3, 16
+	SUB GR3, GR1
+	ADD GR2, GR3					; y_pos + tile offset
+	STORE GR2, y_pos
+	BRA done_handle_collision
+
 :top_right_corner_collides
+	MOVE GR1, [y_pos]
+	AND GR1, 0xF 					; GR1 = y & 0xF, distance to tile border
+	MOVE GR2, [y_pos] 				; GR2 = y_pos
+	MOVE GR3, 16
+	SUB GR3, GR1
+	ADD GR2, GR3					; y_pos + tile offset
+	STORE GR2, y_pos
+	BRA done_handle_collision
+
 :bottom_left_corner_collides
+	BRA floor_collides
 :bottom_right_corner_collides
+	BRA floor_collides
 
 	BRA done_handle_collision
 	
