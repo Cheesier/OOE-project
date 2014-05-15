@@ -15,7 +15,6 @@
 	STORE GR0, x_acc
 	STORE GR2, y_acc_dir		;; gravity direction down 
 	STORE GR3, y_acc 			;; gravity = 2
-	JSR find_collision;
 	BRA boot
 
 :x_pos dat 0
@@ -51,21 +50,26 @@
 	JSR handle_velocity_y
 	JSR handle_movement_x
 	JSR handle_movement_y
+	MOVE GR0, [x_pos]
+	AND GR0, 0x0FFF
+	STORE GR0, x_pos
 	;JSR simple_input
 	JSR find_collision
 	JSR handle_collision
 	JSR render_char
 
 ;;; DEBUG
-	MOVE GR2, [top_left_collide]
-	LSL GR2, 4
-	ADD GR2, [top_right_collide]
-	LSL GR2, 4
-	ADD GR2, [bottom_left_collide]
-	LSL GR2, 4
-	ADD GR2, [bottom_right_collide]
+	;MOVE GR2, [top_left_collide]
+	;LSL GR2, 4
+	;ADD GR2, [top_right_collide]
+	;LSL GR2, 4
+	;ADD GR2, [bottom_left_collide]
+	;LSL GR2, 4
+	;ADD GR2, [bottom_right_collide]
+
+	MOVE GR2, [x_pos]
 	
-	MOVE GR3, [x_acc]
+	MOVE GR3, [x_pos]
 	MOVE GR4, [x_acc_dir]
 	MOVE GR5, [x_vel_dir]
 ;;; END DEBUG
@@ -82,7 +86,10 @@
 
 :check_up
 	MOVE GR0, [0x8000]		;; up
-	CMP GR0, 1
+	MOVE GR1, [bottom_left_collide]
+	OR GR1, [bottom_right_collide]		; GR1 = BL or BR
+	ADD GR0, GR1
+	CMP GR0, 2
 	BNE check_x				;; check next if button not down
 	MOVE GR0, 32
 	STORE GR0, y_vel
@@ -166,7 +173,7 @@
 
 :x_vel_clamp
 	MOVE GR0, [x_vel]
-	CMP GR0, 24					;; max speed
+	CMP GR0, 24						;; max speed
 	BMI x_vel_done
 	MOVE GR0, 24					;; max speed
 	STORE GR0, x_vel
@@ -214,9 +221,9 @@
 	CMP GR0, 1
 	BNE y_vel_done				;; if jumping dont clamp
 	MOVE GR0, [y_vel]
-	CMP GR0, 8					;; max speed
+	CMP GR0, 32					;; max speed
 	BMI y_vel_done
-	MOVE GR0, 8					;; max speed
+	MOVE GR0, 32				;; max speed
 	STORE GR0, y_vel
 
 :y_vel_done
@@ -410,6 +417,8 @@
 	BRA bottom_left_corner_collides
 
 :roof_collides
+	MOVE GR0, 0
+	STORE GR0, [y_vel]
 	MOVE GR0, [bottom_left_collide]
 	CMP GR0, 1
 	BEQ TL_TR_BL_collides
@@ -427,6 +436,8 @@
 	BRA done_handle_collision
 
 :left_wall_collides
+	MOVE GR0, 0
+	STORE GR0, [x_vel]
 	MOVE GR0, [bottom_right_collide]
 	CMP GR0, 1
 	BEQ TL_BL_BR_collides			; Else, continue
@@ -441,6 +452,8 @@
 	BRA done_handle_collision
 
 :right_wall_collides
+	MOVE GR0, 0
+	STORE GR0, [x_vel]
 	MOVE GR0, [bottom_left_collide]
 	CMP GR0, 1
 	BEQ TR_BL_BR_collides			; Else, continue
@@ -453,6 +466,8 @@
 	BRA done_handle_collision
 
 :floor_collides
+	MOVE GR0, 0
+	STORE GR0, [y_vel]
 	MOVE GR1, [y_pos]
 	AND GR1, 0xF 					; GR1 = Y & 0xF, distance to tile border
 	MOVE GR2, [y_pos] 				; GR2 = y_pos
@@ -473,6 +488,8 @@
 	STORE GR2, y_pos
 
 	;; left-wall
+	MOVE GR0, 0
+	STORE GR0, [x_vel]
 	MOVE GR1, [x_pos]
 	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
 	MOVE GR2, [x_pos] 				; GR2 = x_pos
@@ -494,6 +511,8 @@
 	STORE GR2, y_pos
 
 	;; right-wall
+	MOVE GR0, 0
+	STORE GR0, [x_vel]
 	MOVE GR1, [x_pos]
 	AND GR1, 0xF 					; GR1 = X & 0xF, distance to tile border
 	MOVE GR2, [x_pos] 				; GR2 = x_pos
@@ -513,6 +532,8 @@
 	STORE GR2, x_pos
 
 	;; floor
+	MOVE GR0, 0
+	STORE GR0, [y_vel]
 	MOVE GR1, [y_pos]
 	AND GR1, 0xF 					; GR1 = Y & 0xF, distance to tile border
 	MOVE GR2, [y_pos] 				; GR2 = y_pos
@@ -530,6 +551,8 @@
 	STORE GR2, x_pos
 
 	;; floor
+	MOVE GR0, 0
+	STORE GR0, [y_vel]
 	MOVE GR1, [y_pos]
 	AND GR1, 0xF 					; GR1 = Y & 0xF, distance to tile border
 	MOVE GR2, [y_pos] 				; GR2 = y_pos
@@ -538,6 +561,9 @@
 	BRA done_handle_collision
 
 :top_left_corner_collides
+	; roof
+	MOVE GR0, 0
+	STORE GR0, [y_vel]
 	MOVE GR1, [y_pos]
 	AND GR1, 0xF 					; GR1 = y & 0xF, distance to tile border
 	MOVE GR2, [y_pos] 				; GR2 = y_pos
@@ -548,6 +574,7 @@
 	BRA done_handle_collision
 
 :top_right_corner_collides
+	; roof
 	MOVE GR1, [y_pos]
 	AND GR1, 0xF 					; GR1 = y & 0xF, distance to tile border
 	MOVE GR2, [y_pos] 				; GR2 = y_pos
