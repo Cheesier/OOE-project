@@ -41,6 +41,20 @@
 :bottom_left_collide dat 0
 :bottom_right_collide dat 0
 
+:layer_disp_x
+:layer0_disp_x dat 0
+:layer1_disp_x dat 2
+:layer2_disp_x dat 0
+:layer3_disp_x dat 0
+:layer_disp_y
+:layer0_disp_y dat 0
+:layer1_disp_y dat -4
+:layer2_disp_y dat 0
+:layer3_disp_y dat 0
+
+:collision_addr
+:layer0_collision dat 1600
+:layer1_collision dat 960
 
 :boot
 	SSP 0x7FF
@@ -83,6 +97,11 @@
 :input
 	PUSH GR0
 	PUSH GR1
+
+:check_depth
+	MOVE GR0, [0x8004]
+	AND GR0, 0x1
+	STORE GR0, z_pos
 
 :check_up
 	MOVE GR0, [0x8000]		;; up
@@ -342,9 +361,12 @@
 	AND GR0, 0x7 		; X AND 7
 	LSL GR1, 3			; Y * 8
 	ADD GR0, GR1		; X + Y
-	MOVE GR15, GR0		; offset = Y + X
 
-	MOVE GR2, (1600)	; 1600 + offset
+	MOVE GR15, [z_pos]
+	MOVE GR15, (collision_addr)
+
+	ADD GR15, GR0		; GR15 = addr + offset
+	MOVE GR2, (0)		; addr to "box"
 
 	MOVE GR0, GR5 		; x tile coord
 	AND GR0, 0xF		; X AND 1111
@@ -603,10 +625,33 @@
 :render_char
 	PUSH GR0
 
+	MOVE GR15, [z_pos]
+
+	;; Character
 	MOVE GR0, [x_pos]
+	ADD GR0, (layer_disp_x)
 	STORE GR0, 0x9000
 	MOVE GR0, [y_pos]
+	ADD GR0, (layer_disp_y)
 	STORE GR0, 0x9001
+
+	;; Layers
+	MOVE GR0, [layer0_disp_x]
+	STORE GR0, 0x9010
+	MOVE GR0, [layer0_disp_y]
+	STORE GR0, 0x9011
+	MOVE GR0, [layer1_disp_x]
+	STORE GR0, 0x9012
+	MOVE GR0, [layer1_disp_y]
+	STORE GR0, 0x9013
+	MOVE GR0, [layer2_disp_x]
+	STORE GR0, 0x9014
+	MOVE GR0, [layer2_disp_y]
+	STORE GR0, 0x9015
+	MOVE GR0, [layer3_disp_x]
+	STORE GR0, 0x9016
+	MOVE GR0, [layer3_disp_y]
+	STORE GR0, 0x9017
 
 	POP GR0
 	RTS
