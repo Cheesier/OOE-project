@@ -52,13 +52,32 @@
 :layer2_disp_y dat 0
 :layer3_disp_y dat 0
 
+:random_nr dat 0
+:score dat 0
+:current_collectable dat 0
+
+;;;
+;;; Collectables
+;;;
+:spaw_location_x
+dat 0x0E0
+dat 0x1A0
+dat 0x1F0
+dat 0x140
+:spaw_location_y
+dat 0x0C0
+dat 0x0C0
+dat 0x130
+dat 0x1C0
+
 :collision_addr
 :layer0_collision dat 1600
-:layer1_collision dat 960
+:layer1_collision dat 1280
 
 :boot
 	SSP 0x7FF
 :loop
+	JSR random
 	JSR input
 	JSR handle_velocity_x
 	JSR handle_velocity_y
@@ -70,6 +89,7 @@
 	;JSR simple_input
 	JSR find_collision
 	JSR handle_collision
+	JSR collectables_check
 	JSR parallax
 	JSR render
 
@@ -90,6 +110,22 @@
 ;;; END DEBUG
 	WVS
 	BRA loop
+
+
+;;;
+;;; RANDOM
+;;;
+:random
+	PUSH GR0
+
+	MOVE GR0, [random_nr]
+	ADD GR0, 1
+	AND GR0, 3
+	STORE GR0, random_nr
+
+	POP GR0
+
+	RTS
 
 
 ;;;
@@ -620,6 +656,65 @@
 	POP GR0
 	RTS
 
+
+;;;
+;;; Collectables check
+;;;
+:collectables_check
+	PUSH GR0
+	PUSH GR1
+	PUSH GR15
+
+	MOVE GR15, [current_collectable]
+
+	MOVE GR0, (spaw_location_x) 	; GR0 = x location for collectable
+	LSR GR0, 4						; GR0 = tile pos for collectable
+	MOVE GR1, [x_pos]
+	LSR GR1, 4						; GR1 = tile pos for player
+	CMP GR0, GR1 					; collides? in that case
+	BEQ collectables_check_y 		; check if collides in y axis
+
+	ADD GR1, 1 						; GR1 = tile pos for player + 1
+	CMP GR0, GR1 					; collides? in that case
+	BEQ collectables_check_y 		; check if collides in y axis
+
+	BRA collectables_check_done 	; did not collide, exit
+
+:collectables_check_y
+	MOVE GR0, (spaw_location_y) 	; GR0 = y location for collectable
+	LSR GR0, 4						; GR0 = tile pos for collectable
+	MOVE GR1, [y_pos]
+	LSR GR1, 4						; GR1 = tile pos for player
+	CMP GR0, GR1 					; collides? in that case
+	BEQ collectables_collide 		; give player score and place a new one
+
+	ADD GR1, 1 						; GR1 = tile pos for player + 1
+	CMP GR0, GR1 					; collides? in that case
+	BEQ collectables_collide 		; give player score and place a new one
+
+	BRA collectables_check_done 	; did not collide, exit
+
+:collectables_collide
+	MOVE GR0, [score]
+	ADD GR0, 1 						; score++
+	STORE GR0, score
+
+	MOVE GR0, [random_nr] 
+	CMP GR0, [current_collectable]
+	BNE collectables_inequals
+	ADD GR0, 1
+	AND GR0, 3
+
+:collectables_inequals
+	STORE GR0, current_collectable
+
+:collectables_check_done
+	POP GR15
+	POP GR1
+	POP GR0
+
+	RTS
+
 ;;;
 ;;; PARALLAX
 ;;; 
@@ -645,6 +740,7 @@
 ;;; 
 :render
 	PUSH GR0
+	PUSH GR15
 
 	MOVE GR15, [z_pos]
 
@@ -655,6 +751,10 @@
 	MOVE GR0, [y_pos]
 	ADD GR0, (layer_disp_y)
 	STORE GR0, 0x9001
+
+	MOVE GR0, [z_pos]
+	LSL GR0, 14
+	STORE GR0, 0x901A
 
 	;; Layers
 	MOVE GR0, [layer0_disp_x]
@@ -674,10 +774,14 @@
 	MOVE GR0, [layer3_disp_y]
 	STORE GR0, 0x9017
 
-	MOVE GR0, [z_pos]
-	LSL GR0, 14
-	STORE GR0, 0x901A
+	;; Collectable
+	MOVE GR15, [current_collectable]
+	MOVE GR0, (spaw_location_x)
+	STORE GR0, 0x9002
+	MOVE GR0, (spaw_location_y)
+	STORE GR0, 0x9003
 
+	POP GR15
 	POP GR0
 	RTS
 
