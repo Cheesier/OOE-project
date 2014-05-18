@@ -70,7 +70,8 @@
 	;JSR simple_input
 	JSR find_collision
 	JSR handle_collision
-	JSR render_char
+	JSR parallax
+	JSR render
 
 ;;; DEBUG
 	;MOVE GR2, [top_left_collide]
@@ -620,9 +621,29 @@
 	RTS
 
 ;;;
-;;; RENDER CHAR
+;;; PARALLAX
 ;;; 
-:render_char
+:parallax
+	PUSH GR0
+
+	MOVE GR0, [x_pos]
+	LSR GR0, 3 						; every 8th pixel, move planets
+	INV GR0, GR0
+	STORE GR0, layer2_disp_x
+
+	MOVE GR0, [x_pos]
+	LSR GR0, 4 						; every 16th pixel, move background
+	INV GR0, GR0
+	STORE GR0, layer3_disp_x
+
+	POP GR0
+	RTS
+
+
+;;;
+;;; RENDER
+;;; 
+:render
 	PUSH GR0
 
 	MOVE GR15, [z_pos]
@@ -652,6 +673,10 @@
 	STORE GR0, 0x9016
 	MOVE GR0, [layer3_disp_y]
 	STORE GR0, 0x9017
+
+	MOVE GR0, [z_pos]
+	LSL GR0, 14
+	STORE GR0, 0x901A
 
 	POP GR0
 	RTS
