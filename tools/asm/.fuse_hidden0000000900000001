@@ -102,7 +102,7 @@ dat 0x1C0
 	;LSL GR2, 4
 	;ADD GR2, [bottom_right_collide]
 
-	MOVE GR2, [score]
+	MOVE GR2, [x_pos]
 	
 	MOVE GR3, [x_pos]
 	MOVE GR4, [x_acc_dir]
@@ -780,11 +780,6 @@ dat 0x1C0
 	STORE GR0, 0x9002
 	MOVE GR0, (spaw_location_y)
 	STORE GR0, 0x9003
-
-	;; collectable should be cherry
-	MOVE GR0, 1
-	LSL GR0, 8
-	STORE 0x9018
 
 	POP GR15
 	POP GR0
